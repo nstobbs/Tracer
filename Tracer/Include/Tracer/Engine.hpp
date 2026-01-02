@@ -1,5 +1,13 @@
 #pragma once
 
+/*
+@name Tracer::Engine
+
+@brief Performs and manages ray tracing tasks within a pool of
+    rendering threads.
+
+*/
+
 namespace Tracer {
 class Engine {
 public:
