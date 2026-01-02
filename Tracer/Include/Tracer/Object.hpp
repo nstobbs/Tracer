@@ -6,7 +6,7 @@ namespace Tracer {
 
 class Object {
 public:
-    bool virtual isHit();
+    bool virtual isHit() = 0;
 
 protected:
     Material* m_material;

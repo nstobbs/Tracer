@@ -1,6 +1,8 @@
 #include "Application/Application.hpp"
 #include "raylib.h"
 
+#include "Tracer/Mesh.hpp"
+
 #include <iostream>
 
 namespace {
@@ -14,6 +16,8 @@ Application::Application() {
     const int kWindowWidth = 800;
     InitWindow(kWindowWidth, kWindowHeight, "Tracer - Application");
     SetTargetFPS(kTargetFPS);
+
+    auto meshes = Tracer::Mesh::ReadFile("C:/assets/");
 
     m_engine->setCamera();
     m_engine->setScene();
