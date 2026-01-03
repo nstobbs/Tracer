@@ -10,10 +10,11 @@ namespace Tracer {
 
 class Mesh : public Object {
 public:
-    Mesh(std::vector<Vertex>& vertices);
+    Mesh();
     ~Mesh() = default;
 
-    static std::vector<Mesh> ReadFile(const std::string& filepath);
+    static std::vector<Mesh> ReadFile(const std::string& filepath); /* Create meshes from File */
+    static Mesh Triangle(); /* Create an Single Triangle */
 
     bool isHit() override;
 

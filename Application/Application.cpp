@@ -17,7 +17,7 @@ Application::Application() {
     InitWindow(kWindowWidth, kWindowHeight, "Tracer - Application");
     SetTargetFPS(kTargetFPS);
 
-    auto meshes = Tracer::Mesh::ReadFile("C:/assets/");
+    auto mesh = Tracer::Mesh::Triangle();
 
     m_engine->setCamera();
     m_engine->setScene();
