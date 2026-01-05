@@ -1,6 +1,7 @@
 [requires]
 glm/1.0.1
-raylib/5.0
+sdl/3.2.20
+assimp/6.0.2
 
 [generators]
 CMakeDeps
