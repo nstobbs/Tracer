@@ -1,6 +1,7 @@
 add_library(Tracer STATIC
     Object.cpp
     Mesh.cpp
+    Image.cpp
 )
 
 target_include_directories(Tracer PUBLIC 

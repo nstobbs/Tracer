@@ -2,7 +2,11 @@
 
 namespace Tracer {
 
-Mesh Mesh::Triangle() {
+bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo) {
+    return true;
+};
+
+Mesh Mesh::ColorfulTriangle() {
     Mesh triangleMesh;
     VertexInfo info {
         .hasPosition = true,
