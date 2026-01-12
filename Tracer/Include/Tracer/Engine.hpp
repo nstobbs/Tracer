@@ -1,8 +1,10 @@
 #pragma once
+
 #include "Tracer/Image.hpp"
 #include "Tracer/Camera.hpp"
 #include "Tracer/Scene.hpp"
 #include "Tracer/Ray.hpp"
+#include "Tracer/ThreadPool.hpp"
 
 /*
 @name Tracer::Engine
@@ -16,29 +18,52 @@ namespace Tracer {
 class Engine {
 public:
     Engine();
-    ~Engine() = default;
+    ~Engine();
 
     void SetScene(Scene* scene);
     void SetCamera(Camera* camera);
     void SetImage(Image* image);
     void SetSamplesPerPixel(u32 numOfSamples);
+    void SetTargetLayer(const std::string& layer);
 
     void StartRendering();
     void StopRendering();
 
+    void Tick();
+
 private:
+    void SubmitTasks();
+    void SubmitBucket(u32 x, u32 y);
+
+    Layer* GetTargetLayer() { return m_image->GetLayer(m_targetLayer); };
+
     Ray GetRay(u32 x, u32 y) const;
-    Color4 GetRayColor(const Ray& ray, i32 maxDepth) const; //TODO: add scene
-    void CalculatePixelColor(u32 x, u32 y) const;
+    Color4 GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const;
+    void CalculatePixelColor(u32 x, u32 y);
     Vector3 SampleSquare() const;
 
     u32 m_samplesPerPixel = {1};
+    u32 m_bucketSize = {32};
+
     bool m_isRunning = {false};
 
     Camera* m_camera = {nullptr};
     Scene* m_scene = {nullptr};
     Image* m_image = {nullptr};
 
+    u64 m_version = {0};
+    u64 m_prevVersion = {0};
+
+    std::string m_targetLayer = "eInvalid";
+
+    /* Execution Pool*/
+    ThreadPool* m_pool = {nullptr};
+
+    /* Task Submitter*/
+    std::thread m_sumbitThread;
+    std::queue<std::function<void()>> m_tasks;
+    std::mutex m_queue_mutex;
+    std::condition_variable m_cv;
 };
 
 }

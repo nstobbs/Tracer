@@ -9,6 +9,9 @@ public:
     Camera() = default;
     ~Camera() = default;
 
+    f32 GetFoV() {return m_fov;};
+    Vector3 GetUp() {return m_Up;};
+
 private:
     Point3 m_position;
     Vector3 m_lookAt;

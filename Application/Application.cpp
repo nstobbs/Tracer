@@ -26,41 +26,47 @@ Application::Application() {
     }
 
     /* Tracer Engine & Scene Setup */
+    m_engine = std::make_unique<Tracer::Engine>();
     auto mesh = Tracer::Mesh::ColorfulTriangle();
 
-    /* Image ColorChannel */
-    m_image = std::make_unique<Tracer::Image>(kWindowWidth, kWindowHeight);
-    m_image->CreateChannel("ColorChannel");
-    m_image->GetChannel("ColorChannel")->DrawTestPatten(Tracer::TestPatten::eUVRamp);
-    //m_engine->SetImage(m_image.get());
+    /* Image  */
+    auto layerColor = "ColorLayer";
 
-    //m_engine->startRendering();
+    m_image = std::make_unique<Tracer::Image>(kWindowWidth, kWindowHeight);
+    m_image->CreateLayer(layerColor);
+    m_image->GetLayer(layerColor)->FloodColor(Tracer::Color4(0.0f));
+
+    m_engine->SetImage(m_image.get());
+    m_engine->SetTargetLayer(layerColor);
+
+    m_engine->StartRendering();
 
     /* Main Loop */
     SDL_Event event;
     while (!m_shutdown) {
         if (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_QUIT) {
-                //m_engine->stopRendering();
+                m_engine->StopRendering();
                 m_shutdown = true;
             }
         };
 
+        m_engine->Tick();
         /* Rendering Stuff Here!*/
-        PresentChannelToWindow(m_image->GetChannel("ColorChannel"), m_window);
+        PresentLayerToWindow(m_image->GetLayer(layerColor), m_window);
     }
 };
 
 Application::~Application() {
     std::printf("Shuting Down Application.\n");
-    //m_engine->stopRendering();
+    m_engine->StopRendering();
     SDL_DestroyRenderer(m_windowRenderer);
     SDL_DestroyWindow(m_window);
     SDL_Quit();
 };
 
-void Application::PresentChannelToWindow(Tracer::Channel* channel, SDL_Window* window) {
-    if (!channel) {
+void Application::PresentLayerToWindow(Tracer::Layer* layer, SDL_Window* window) {
+    if (!layer) {
         return;
     }
 
@@ -75,9 +81,9 @@ void Application::PresentChannelToWindow(Tracer::Channel* channel, SDL_Window* w
     auto sPitch = surface->pitch;
     auto sBytesPerPixel = surface->format->BytesPerPixel;
 
-    auto height = channel->GetRowCount();
+    auto height = layer->GetRowCount();
     for (int y = 0; y < height; y++) {
-        auto row = channel->GetRow(y);
+        auto row = layer->GetRow(y);
         auto width = row.size();
         for (int x = 0; x < width; x++) {
             auto pixel = row[x];

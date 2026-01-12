@@ -15,10 +15,10 @@ public:
 
 private:
     /* Functions */
-    void PresentChannelToWindow(Tracer::Channel* channel, SDL_Window* window);
+    void PresentLayerToWindow(Tracer::Layer* layer, SDL_Window* window);
 
     /* Tracer */
-    //Tracer::UniquePtr<Tracer::Engine> m_engine;
+    Tracer::UniquePtr<Tracer::Engine> m_engine;
     Tracer::UniquePtr<Tracer::Image> m_image;
 
     /* SDL Platform */

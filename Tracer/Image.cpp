@@ -2,8 +2,8 @@
 
 namespace Tracer {
 
-/* Tracer::Channel */
-Channel::Channel(i32 width, i32 height) {
+/* Tracer::Layer */
+Layer::Layer(i32 width, i32 height) {
     m_data.resize(height);
     for (auto& row : m_data) {
         row.resize(width);
@@ -11,7 +11,7 @@ Channel::Channel(i32 width, i32 height) {
     FloodColor(Color4(0.0f, 0.0f, 0.0f, 1.0f));
 };
 
-void Channel::FloodColor(Color4 color) {
+void Layer::FloodColor(Color4 color) {
     for (auto& row : m_data) {
         for (auto& pixel : row) {
             pixel = color;
@@ -19,7 +19,7 @@ void Channel::FloodColor(Color4 color) {
     }
 };
 
-void Channel::DrawTestPatten(TestPatten type) {
+void Layer::DrawTestPatten(TestPatten type) {
     switch(type){
         case TestPatten::eNone: {
         }
@@ -43,29 +43,29 @@ void Channel::DrawTestPatten(TestPatten type) {
 
 };
 
-i32 Channel::GetRowCount() {
+i32 Layer::GetRowCount() {
     return m_data.size();
 };
 
-std::vector<Color4>& Channel::GetRow(u32 index) {
+std::vector<Color4>& Layer::GetRow(u32 index) {
     return m_data[index];
 };
 
 /* Tracer::Image */
-void Image::CreateChannel(const std::string& name) {
-    m_channels.emplace(name, Channel(m_width, m_height));
-    m_channelNames.push_back(name);
+void Image::CreateLayer(const std::string& name) {
+    m_layers.emplace(name, Layer(m_width, m_height));
+    m_layerNames.push_back(name);
 };
 
-Channel* Image::GetChannel(const std::string& name) {
-    if (m_channels.find(name) != m_channels.end()) {
-        return &m_channels.at(name);
+Layer* Image::GetLayer(const std::string& name) {
+    if (m_layers.find(name) != m_layers.end()) {
+        return &m_layers.at(name);
     }
     return nullptr;
 };
 
-std::vector<std::string> Image::GetChannelNames() {
-    return m_channelNames;
+std::vector<std::string> Image::GetLayerNames() {
+    return m_layerNames;
 };
 
 }
