@@ -3,6 +3,7 @@
 #include "Tracer/Types.hpp"
 #include "Tracer/Engine.hpp"
 #include "Tracer/Image.hpp"
+#include "Tracer/Camera.hpp"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -20,6 +21,8 @@ private:
     /* Tracer */
     Tracer::UniquePtr<Tracer::Engine> m_engine;
     Tracer::UniquePtr<Tracer::Image> m_image;
+    Tracer::UniquePtr<Tracer::Scene> m_scene;
+    Tracer::UniquePtr<Tracer::Camera> m_camera;
 
     /* SDL Platform */
     SDL_Window* m_window;

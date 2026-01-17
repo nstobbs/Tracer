@@ -27,8 +27,13 @@ Application::Application() {
 
     /* Tracer Engine & Scene Setup */
     m_engine = std::make_unique<Tracer::Engine>();
+    m_scene = std::make_unique<Tracer::Scene>();
+    m_camera = std::make_unique<Tracer::Camera>();
     auto mesh = Tracer::Mesh::ColorfulTriangle();
-
+    m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
+    m_engine->SetScene(m_scene.get());
+    m_engine->SetCamera(m_camera.get());
+    
     /* Image  */
     auto layerColor = "ColorLayer";
 
@@ -51,8 +56,8 @@ Application::Application() {
             }
         };
 
-        m_engine->Tick();
         /* Rendering Stuff Here!*/
+        m_engine->Tick();
         PresentLayerToWindow(m_image->GetLayer(layerColor), m_window);
     }
 };
@@ -60,6 +65,7 @@ Application::Application() {
 Application::~Application() {
     std::printf("Shuting Down Application.\n");
     m_engine->StopRendering();
+    m_shutdown = true;
     SDL_DestroyRenderer(m_windowRenderer);
     SDL_DestroyWindow(m_window);
     SDL_Quit();

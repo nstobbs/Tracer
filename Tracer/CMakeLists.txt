@@ -4,6 +4,7 @@ add_library(Tracer STATIC
     Image.cpp
     Engine.cpp
     ThreadPool.cpp
+    Scene.cpp
 )
 
 target_include_directories(Tracer PUBLIC 

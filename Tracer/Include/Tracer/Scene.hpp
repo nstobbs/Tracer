@@ -13,9 +13,10 @@ public:
     ~Scene() = default;
 
     void AddObject(Object* object);
+    void AddObjects(std::vector<Object*> objects);
     void AddSurface(Surface* surface);
-    std::vector<Object*>& GetObjects();
-    std::vector<Surface*>& GetSurfaces();
+    std::vector<Object*>& GetObjects() { return m_objects; };
+    std::vector<Surface*>& GetSurfaces() { return m_surfaces; };
 
 private:
     std::vector<Object*> m_objects;

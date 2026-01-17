@@ -39,6 +39,7 @@ ThreadPool::~ThreadPool() {
     {
         std::unique_lock<std::mutex> lock(m_queue_mutex);
         m_stop = true;
+        m_mode = PoolMode::eForceStop;
     }
 
     m_cv.notify_all();

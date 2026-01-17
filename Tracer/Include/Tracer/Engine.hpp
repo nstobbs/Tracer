@@ -4,6 +4,7 @@
 #include "Tracer/Camera.hpp"
 #include "Tracer/Scene.hpp"
 #include "Tracer/Ray.hpp"
+#include "Tracer/Interval.hpp"
 #include "Tracer/ThreadPool.hpp"
 
 /*

@@ -17,7 +17,7 @@ public:
     static std::vector<Mesh> ReadFile(const std::string& filepath); /* Create meshes from File */
     static Mesh ColorfulTriangle(); /* Create an Single Triangle */
 
-    bool isHit(const Ray& ray, HitInfo& hitInfo) override;
+    bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) override;
 
 private:
     VertexInfo m_info;

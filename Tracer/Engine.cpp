@@ -6,7 +6,7 @@
 namespace Tracer {
 
 namespace {
-    const f32 kPi = 3.14f; 
+    const f64 kPi = 3.1415926535897932385;
 }
 
 Engine::Engine() {
@@ -147,28 +147,15 @@ void Engine::CalculatePixelColor(u32 x, u32 y) {
     /* !RayTracing! */
     Ray ray = GetRay(x, y);
 
+    auto color = Color4(0.5f, 0.5f, 0.5f, 1.0f);
+
     auto scene = m_scene->GetObjects();
     HitInfo info;
     for (auto object : scene) {
-        if (object->isHit(ray, info)) {
-            Color4 rayColor;
-            for (u32 sample = 0; sample < m_samplesPerPixel; sample++) {
-                rayColor =+ object->getSurface()->calculateSurfaceColor(info);
-            };
-            rayColor = rayColor / Color4(m_samplesPerPixel);
+        if (object->isHit(ray, info, Interval())) {
+            color = Color4(0.85f, 0.0f, 0.0f, 1.0f);
         };
     }
-
-    /* Calculate Pixel Color */
-    auto w = m_image->GetWidth();
-    auto h = m_image->GetHeight();
-    auto pX = f32(x) / f32(w);
-    auto pY = f32(y) / f32(h);
-
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(0.1ms);
-
-    auto color = Color4(pX, pY, 0.0f, 1.0f);
 
     /* Write to ImageLayer*/
     if (m_targetLayer != "eInvalid") {
