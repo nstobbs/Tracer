@@ -10,7 +10,7 @@ namespace {
 }
 
 Engine::Engine() {
-    m_pool = new ThreadPool;
+    m_pool = new ThreadPool(1);
 }
 
 Engine::~Engine() {
@@ -153,7 +153,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) {
     HitInfo info;
     for (auto object : scene) {
         if (object->isHit(ray, info, Interval())) {
-            color = Color4(0.85f, 0.0f, 0.0f, 1.0f);
+            color = object->getSurface()->calculateSurfaceColor(info);
         };
     }
 

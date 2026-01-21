@@ -6,13 +6,19 @@ namespace Tracer{
 
 class Surface {
 public:
-    Surface();
     ~Surface() = default;
 
-    Color4 calculateSurfaceColor(const HitInfo& info);
+    Color4 virtual calculateSurfaceColor(const HitInfo& info) = 0;
 
 protected:
-    
+
 };
+
+/* TODO: Move theses surfaces into they our files */
+class VertexColor : public Surface {
+public:
+    Color4 calculateSurfaceColor(const HitInfo& info) override;
+};
+
 
 }

@@ -30,7 +30,12 @@ Application::Application() {
     m_scene = std::make_unique<Tracer::Scene>();
     m_camera = std::make_unique<Tracer::Camera>();
     auto mesh = Tracer::Mesh::ColorfulTriangle();
+    auto surface = Tracer::VertexColor();
+    mesh.SetSurface(&surface);
+
     m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
+    m_scene->AddSurface(&surface);
+    
     m_engine->SetScene(m_scene.get());
     m_engine->SetCamera(m_camera.get());
     
