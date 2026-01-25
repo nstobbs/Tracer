@@ -4,6 +4,7 @@ add_library(Tracer STATIC
     Image.cpp
     Engine.cpp
     ThreadPool.cpp
+    Tasker.cpp
     Scene.cpp
     Surface.cpp
 )

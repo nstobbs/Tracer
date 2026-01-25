@@ -6,6 +6,7 @@
 #include "Tracer/Ray.hpp"
 #include "Tracer/Interval.hpp"
 #include "Tracer/ThreadPool.hpp"
+#include "Tracer/Tasker.hpp"
 
 /*
 @name Tracer::Engine
@@ -19,7 +20,7 @@ namespace Tracer {
 class Engine {
 public:
     Engine();
-    ~Engine();
+    ~Engine() = default;
 
     void SetScene(Scene* scene);
     void SetCamera(Camera* camera);
@@ -33,8 +34,7 @@ public:
     void Tick();
 
 private:
-    void SubmitTasks();
-    void SubmitBucket(u32 x, u32 y);
+    void RenderBucket(u32 x, u32 y);
 
     Layer* GetTargetLayer() { return m_image->GetLayer(m_targetLayer); };
 
@@ -43,7 +43,7 @@ private:
     void CalculatePixelColor(u32 x, u32 y);
     Vector3 SampleSquare() const;
 
-    u32 m_samplesPerPixel = {1};
+    u32 m_samplesPerPixel = {10};
     u32 m_bucketSize = {32};
 
     bool m_isRunning = {false};
@@ -57,14 +57,10 @@ private:
 
     std::string m_targetLayer = "eInvalid";
 
-    /* Execution Pool*/
-    ThreadPool* m_pool = {nullptr};
-
-    /* Task Submitter*/
-    std::thread m_sumbitThread;
-    std::queue<std::function<void()>> m_tasks;
-    std::mutex m_queue_mutex;
-    std::condition_variable m_cv;
+    /* Execution Objects */
+    friend class Tasker;
+    UniquePtr<Tasker> m_tasker;
+    UniquePtr<ThreadPool> m_pool;
 };
 
 }

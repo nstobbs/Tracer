@@ -10,18 +10,8 @@ namespace {
 }
 
 Engine::Engine() {
-    m_pool = new ThreadPool(1);
-}
-
-Engine::~Engine() {
-    {
-        std::unique_lock<std::mutex> lock(m_queue_mutex);
-        m_isRunning = false;
-    }
-    m_cv.notify_all();
-    m_sumbitThread.join();
-    
-    delete m_pool;
+    m_pool = std::make_unique<ThreadPool>();
+    m_tasker = std::make_unique<Tasker>(this);
 }
 
 void Engine::SetScene(Scene* scene) {
@@ -51,27 +41,6 @@ void Engine::SetTargetLayer(const std::string& layer) {
 
 void Engine::StartRendering() {
     m_isRunning = true;
-    /* Sumbit Thread */
-    m_sumbitThread = std::thread([this]{
-        std::function<void()> task;
-        {
-            std::unique_lock<std::mutex> lock(m_queue_mutex);
-            m_cv.wait(lock, [this]{
-                return !m_tasks.empty() || !m_isRunning;
-            });
-
-            if (!m_isRunning && m_tasks.empty()) {
-                return;
-            }
-
-            task = std::move(m_tasks.front());
-            m_tasks.pop();
-        }
-        if(!task) {
-            return;
-        }
-        task();
-    });
 }
 
 void Engine::StopRendering() {
@@ -81,43 +50,17 @@ void Engine::StopRendering() {
 void Engine::Tick() {
     if (m_isRunning && m_version != m_prevVersion) {
         m_prevVersion = m_version;
-        {
-            std::unique_lock<std::mutex> lock(m_queue_mutex);
-            m_tasks.emplace(std::move([this]{
-                this->SubmitTasks();
-            }));
-        }
-        m_cv.notify_all();
+        m_tasker->SubmitFrameToPool();
     }
 }
 
-void Engine::SubmitBucket(u32 x, u32 y) {
+void Engine::RenderBucket(u32 x, u32 y) {
     for (u32 bY = 0; bY < m_bucketSize; bY++) {
         for (u32 bX = 0; bX < m_bucketSize; bX++) {
             CalculatePixelColor(x+bX, y+bY);
         }
     }
 }
-
-void Engine::SubmitTasks() {
-    if (m_targetLayer != "eInvalid") {
-        u32 w = m_image->GetWidth();
-        u32 h = m_image->GetHeight();
-
-        u32 bucketWCount = w / m_bucketSize;
-        u32 bucketHCount = h / m_bucketSize;
-
-        for (u32 Y = 0; Y < bucketHCount; Y++) {
-            for (u32 X = 0; X < bucketWCount; X++) {
-                u32 pX = X * m_bucketSize;
-                u32 pY = Y * m_bucketSize;
-                m_pool->sumbitTask([this, pX, pY]{
-                    this->SubmitBucket(pX, pY);
-                });
-            }
-        }
-    }
-};
 
 Ray Engine::GetRay(u32 x, u32 y) const {
     f32 width = m_image->GetWidth();
