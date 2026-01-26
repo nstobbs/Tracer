@@ -25,6 +25,9 @@ public:
     ~ThreadPool();
 
     void sumbitTask(std::function<void()> task);
+    void clearQueue();
+    void abortCurrent();
+
 private:
     std::vector<std::thread> m_threads;
     std::queue<std::function<void()>> m_tasks;

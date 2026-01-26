@@ -10,7 +10,7 @@ namespace {
 }
 
 Engine::Engine() {
-    m_pool = std::make_unique<ThreadPool>();
+    m_pool = std::make_unique<ThreadPool>(1);
     m_tasker = std::make_unique<Tasker>(this);
 }
 
@@ -21,6 +21,7 @@ void Engine::SetScene(Scene* scene) {
 
 void Engine::SetCamera(Camera* camera) {
     m_version++;
+    m_prevCameraVersion = camera->GetCameraVersion();
     m_camera = camera;
 }
 
@@ -48,9 +49,12 @@ void Engine::StopRendering() {
 }
 
 void Engine::Tick() {
-    if (m_isRunning && m_version != m_prevVersion) {
-        m_prevVersion = m_version;
-        m_tasker->SubmitFrameToPool();
+    if (m_isRunning) {
+        if (m_version != m_prevVersion || m_prevCameraVersion != m_camera->GetCameraVersion()) {
+            m_prevVersion = m_version;
+            m_prevCameraVersion = m_camera->GetCameraVersion();
+            m_tasker->SubmitFrameToPool();
+        }
     }
 }
 
@@ -95,7 +99,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) {
     auto scene = m_scene->GetObjects();
     HitInfo info;
     for (auto object : scene) {
-        if (object->isHit(ray, info, Interval())) {
+        if (object->isHit(ray, info, Interval(), *m_camera)) {
             color = object->getSurface()->calculateSurfaceColor(info);
         };
     }

@@ -69,6 +69,7 @@ void Tasker::SubmitFrameToPool() {
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_tasks.emplace([this]{
+            this->m_engine->m_pool->clearQueue();
             this->execute();
         });
     }

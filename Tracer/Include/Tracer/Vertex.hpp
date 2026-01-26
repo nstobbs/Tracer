@@ -10,6 +10,8 @@ struct Vertex {
     Color4 color = {0, 0, 0, 0};
 };
 
+Vertex multiply(Matrix4 mat, Vertex vertex);
+
 struct VertexInfo {
     bool hasPosition = {false};
     bool hasNormals = {false};

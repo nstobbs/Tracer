@@ -6,14 +6,16 @@ namespace {
 
 namespace Tracer {
 
-bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
+bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera& camera) {
+    /* Apply Camera View Model */ 
+    Matrix4 view = camera.GetViewModel();
 
     /* Per Each Triangle Of this Mesh */
     u64 vertexCount = m_indices.size();
     for (u64 i = 0; i < vertexCount; i+3) {
-        Vertex v0 = m_vertices.at(i);
-        Vertex v1 = m_vertices.at(i+1);
-        Vertex v2 = m_vertices.at(i+2);
+        Vertex v0 = multiply(view, m_vertices.at(i));
+        Vertex v1 = multiply(view, m_vertices.at(i+1));
+        Vertex v2 = multiply(view, m_vertices.at(i+2));
 
         /* Check if the  Ray is Parallel Lines */
         if (glm::dot(ray.direction, v0.normals) <= kThreshold) {

@@ -56,4 +56,19 @@ void ThreadPool::sumbitTask(std::function<void()> task) {
     m_cv.notify_one();
 };
 
+void ThreadPool::clearQueue() {
+    {
+        std::unique_lock<std::mutex> lock (m_queue_mutex);
+        if (auto size = m_tasks.size() != 0) {
+            for (int i = 0; i < size; i++) {
+                m_tasks.pop();
+            }
+        }
+    }
+};
+
+void ThreadPool::abortCurrent() {
+
+};
+
 }

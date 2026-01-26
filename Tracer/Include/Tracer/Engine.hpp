@@ -54,6 +54,7 @@ private:
 
     u64 m_version = {0};
     u64 m_prevVersion = {0};
+    u64 m_prevCameraVersion = {0};
 
     std::string m_targetLayer = "eInvalid";
 

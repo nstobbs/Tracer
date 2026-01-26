@@ -1,5 +1,4 @@
 add_library(Tracer STATIC
-    Object.cpp
     Mesh.cpp
     Image.cpp
     Engine.cpp
@@ -7,6 +6,8 @@ add_library(Tracer STATIC
     Tasker.cpp
     Scene.cpp
     Surface.cpp
+    Camera.cpp
+    Vertex.cpp
 )
 
 target_include_directories(Tracer PUBLIC 

@@ -58,6 +58,12 @@ Application::Application() {
             if (event.type == SDL_QUIT) {
                 m_engine->StopRendering();
                 m_shutdown = true;
+            } else if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_UP) {
+                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eForward);
+                } else if (event.key.keysym.sym == SDLK_DOWN) {
+                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eBackward);
+                }
             }
         };
 
