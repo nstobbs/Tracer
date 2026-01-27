@@ -9,7 +9,7 @@ namespace Tracer {
 
 class Object {
 public:
-    bool virtual isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera& camera) = 0;
+    bool virtual isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) = 0;
     void SetSurface(Surface* surface) { m_surface = surface; };  
     Surface* getSurface() { return m_surface; };
 

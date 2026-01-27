@@ -10,7 +10,7 @@ namespace {
 }
 
 Engine::Engine() {
-    m_pool = std::make_unique<ThreadPool>(1);
+    m_pool = std::make_unique<ThreadPool>(12);
     m_tasker = std::make_unique<Tasker>(this);
 }
 

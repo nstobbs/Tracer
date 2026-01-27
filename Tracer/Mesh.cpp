@@ -6,7 +6,7 @@ namespace {
 
 namespace Tracer {
 
-bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera& camera) {
+bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) {
     /* Apply Camera View Model */ 
     Matrix4 view = camera.GetViewModel();
 

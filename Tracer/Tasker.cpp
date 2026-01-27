@@ -6,24 +6,26 @@ namespace Tracer {
 Tasker::Tasker(Engine* engine) {
     m_engine = engine;
     m_thread = std::thread{[this]{ 
-        SubmitTask task;
-        {
-            std::unique_lock<std::mutex> lock(m_mutex);
-            m_cv.wait(lock, [this]{
-                return !m_tasks.empty() || m_stop;
-            });
+        while(true) {
+            SubmitTask task;
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                m_cv.wait(lock, [this]{
+                    return !m_tasks.empty() || m_stop;
+                });
 
-            if (m_stop && m_tasks.empty()) {
+                if (m_stop && m_tasks.empty()) {
+                    return;
+                }
+
+                task = std::move(m_tasks.front());
+                m_tasks.pop();
+            }
+            if (!task) {
                 return;
             }
-
-            task = std::move(m_tasks.front());
-            m_tasks.pop();
+            task();
         }
-        if (!task) {
-            return;
-        }
-        task();
     }};
 };
 
@@ -73,7 +75,7 @@ void Tasker::SubmitFrameToPool() {
             this->execute();
         });
     }
-    m_cv.notify_all();
+    m_cv.notify_one();
 };
 
 void Tasker::SubmitFrameToPool(BucketOrder override) {
