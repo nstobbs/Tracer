@@ -10,7 +10,7 @@ namespace {
 }
 
 Engine::Engine() {
-    m_pool = std::make_unique<ThreadPool>(1);
+    m_pool = std::make_unique<ThreadPool>();
     m_tasker = std::make_unique<Tasker>(this);
 }
 
@@ -94,7 +94,8 @@ void Engine::CalculatePixelColor(u32 x, u32 y) {
     /* !RayTracing! */
     Ray ray = GetRay(x, y);
 
-    auto color = Color4(0.5f, 0.5f, 0.5f, 1.0f);
+    /* Missed Colour */
+    auto color = m_missedColor;
 
     auto scene = m_scene->GetObjects();
     HitInfo info;

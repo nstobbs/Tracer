@@ -19,7 +19,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
     assert(indexCount % 3 == 0);
 
     u64 triangleCount = indexCount / 3;
-    for (u64 i = 0; i < triangleCount; i) {
+    for (u64 i = 0; i < triangleCount; i++) {
 
         /* Transform From World to Camera Space */
         Vertex v0 = multiply(view, m_vertices.at(i));
@@ -72,7 +72,6 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         };
 
         f32 combined = abs(w1 + w2 + w0);
-
         if (combined >= (1.0f + kThreshold) && combined <= (1.0f - kThreshold)) {
             continue;
         }

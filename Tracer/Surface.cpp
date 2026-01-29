@@ -36,13 +36,12 @@ Color4 PreviewNormals::CalculateColor(const HitInfo& info) {
         v = info.extra.pTriangle->v;
         w = info.extra.pTriangle->w;
 
-        output = (Color4(v0.normals, 1.0f) * static_cast<f32>(u));
+        output = Color4(v0.normals, 1.0f) * static_cast<f32>(u);
         output += Color4(v1.normals, 1.0f) * static_cast<f32>(v);
         output += Color4(v2.normals, 1.0f) * static_cast<f32>(w);
         output.w = 1.0f;
     };
     
-    output = Color4(1.0f, 1.0f, 1.0f, 1.0f);
     return output;
 };
 

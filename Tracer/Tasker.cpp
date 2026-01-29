@@ -1,6 +1,8 @@
 #include "Tracer/Tasker.hpp"
 #include "Tracer/Engine.hpp"
 
+#include <map>
+
 namespace Tracer {
 
 Tasker::Tasker(Engine* engine) {
@@ -56,11 +58,15 @@ std::queue<BucketTask> Tasker::createBucketsQueue() {
         /* Create Queue of BucketTasks */
         for (u32 Y = 0; Y < bucketHeightSize; Y++) {
             for (u32 X = 0; X < bucketWidthSize; X++) {
+                BucketTask bucket{};
                 u32 topLeftX = X * m_engine->m_bucketSize;
                 u32 topLeftY = Y * m_engine->m_bucketSize;
-                bucketQueue.emplace([this, topLeftX, topLeftY]{
+                bucket.x = topLeftX;
+                bucket.y = topLeftY;
+                bucket.task = [this, topLeftX, topLeftY]{
                     this->m_engine->RenderBucket(topLeftX, topLeftY);
-                });
+                };
+                bucketQueue.emplace(bucket);
             }
         }
     }
@@ -83,14 +89,35 @@ void Tasker::SubmitFrameToPool(BucketOrder override) {
 };
 
 std::queue<BucketTask> Tasker::sortBuckets(std::queue<BucketTask> queue, BucketOrder order) {
+    std::multimap<f32, BucketTask> distanceBucketsMap;
     if (order != BucketOrder::eInvalid) {
         switch (order) {
             case BucketOrder::eLeftToRight:
                 break;
             case BucketOrder::eCenterOut:
+                /*Calculate the Image Center.
+                Calculate the Distance from the bucket to Image Center. 
+                Sort in that Order*/
+                Point2 imageCenter = Point2(static_cast<f32>(m_engine->m_image->GetWidth()) / 2.0f,
+                                            static_cast<f32>(m_engine->m_image->GetHeight()) / 2.0f);
+                while (!queue.empty()) {
+                    BucketTask task = queue.front();
+                    queue.pop();
+
+                    Point2 taskPosition = Point2(static_cast<f32>(task.x),
+                                                 static_cast<f32>(task.y));
+                    Point2 delta = imageCenter - taskPosition;
+                    delta.x = delta.x * delta.x;
+                    delta.y = delta.y * delta.y;
+                    f32 distance = delta.x + delta.y;
+                    distance = std::sqrt(distance);
+                    distanceBucketsMap.emplace(distance, task);
+                };
+                
+                for (auto task : distanceBucketsMap) {
+                    queue.emplace(task.second);
+                }
                 break;
-                /* Cut the Queue from the middle. Reverse One of the 
-                the Queue. Interweave the two Queue back into one.*/
         }
     }
 
@@ -100,9 +127,9 @@ std::queue<BucketTask> Tasker::sortBuckets(std::queue<BucketTask> queue, BucketO
 void Tasker::execute() {
     m_submittingFrame = true;
     std::queue<BucketTask> tasks = createBucketsQueue();
-    tasks = sortBuckets(tasks, m_bucketOrder);
+    tasks = sortBuckets(tasks, BucketOrder::eCenterOut);
     while (!tasks.empty()) {
-        m_engine->m_pool->sumbitTask(std::move(tasks.front()));
+        m_engine->m_pool->sumbitTask(std::move(tasks.front().task));
         tasks.pop();
     }
     m_submittingFrame = false;

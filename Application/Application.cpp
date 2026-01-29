@@ -42,15 +42,15 @@ Application::Application() {
     m_engine->SetScene(m_scene.get());
     m_engine->SetCamera(m_camera.get());
     
-    /* Image  */
-    auto layerColor = "ColorLayer";
+    /* Image Layer Setup */
+    std::string renderLayer = "Color";
 
     m_image = std::make_unique<Tracer::Image>(kWindowWidth, kWindowHeight);
-    m_image->CreateLayer(layerColor);
-    m_image->GetLayer(layerColor)->FloodColor(Tracer::Color4(0.0f));
+    m_image->CreateLayer(renderLayer);
+    m_image->GetLayer(renderLayer)->FloodColor(Tracer::Color4(0.0f));
 
     m_engine->SetImage(m_image.get());
-    m_engine->SetTargetLayer(layerColor);
+    m_engine->SetTargetLayer(renderLayer);
 
     m_engine->StartRendering();
 
@@ -76,7 +76,7 @@ Application::Application() {
 
         /* Rendering Stuff Here!*/
         m_engine->Tick();
-        PresentLayerToWindow(m_image->GetLayer(layerColor), m_window);
+        PresentLayerToWindow(m_image->GetLayer(renderLayer), m_window);
     }
 };
 

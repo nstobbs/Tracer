@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Tracer/Types.hpp"
+
 #include <condition_variable>
 #include <functional>
 #include <iostream>
@@ -9,7 +11,12 @@
 
 namespace {
     using SubmitTask = std::function<void()>;
-    using BucketTask = std::function<void()>;
+    using RenderTask = std::function<void()>;
+    
+    struct BucketTask {
+        RenderTask task;
+        Tracer::u32 x, y;
+    };
 }
 
 namespace Tracer {
