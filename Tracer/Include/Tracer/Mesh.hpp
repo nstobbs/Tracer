@@ -2,7 +2,6 @@
 
 #include "Tracer/Object.hpp"
 #include "Tracer/Vertex.hpp"
-
 #include <vector>
 #include <string>
 

@@ -83,6 +83,17 @@ void Tasker::SubmitFrameToPool(BucketOrder override) {
 };
 
 std::queue<BucketTask> Tasker::sortBuckets(std::queue<BucketTask> queue, BucketOrder order) {
+    if (order != BucketOrder::eInvalid) {
+        switch (order) {
+            case BucketOrder::eLeftToRight:
+                break;
+            case BucketOrder::eCenterOut:
+                break;
+                /* Cut the Queue from the middle. Reverse One of the 
+                the Queue. Interweave the two Queue back into one.*/
+        }
+    }
+
     return queue;
 };
 

@@ -15,7 +15,9 @@ target_include_directories(Tracer PUBLIC
 )
 
 find_package(glm REQUIRED)
+find_package(assimp)
 
 target_link_libraries(Tracer
     glm::glm
+    assimp::assimp
 )

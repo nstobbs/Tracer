@@ -1,5 +1,10 @@
 #include "Tracer/Mesh.hpp"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <cmath>
+
 namespace {
     const Tracer::f64 kThreshold = 0.01;
 }
@@ -7,19 +12,23 @@ namespace {
 namespace Tracer {
 
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) {
-    /* Apply Camera View Model */ 
     Matrix4 view = camera.GetViewModel();
 
     /* Per Each Triangle Of this Mesh */
-    u64 vertexCount = m_indices.size();
-    for (u64 i = 0; i < vertexCount; i+3) {
+    u64 indexCount = m_indices.size();
+    assert(indexCount % 3 == 0);
+
+    u64 triangleCount = indexCount / 3;
+    for (u64 i = 0; i < triangleCount; i) {
+
+        /* Transform From World to Camera Space */
         Vertex v0 = multiply(view, m_vertices.at(i));
         Vertex v1 = multiply(view, m_vertices.at(i+1));
         Vertex v2 = multiply(view, m_vertices.at(i+2));
 
         /* Check if the  Ray is Parallel Lines */
         if (glm::dot(ray.direction, v0.normals) <= kThreshold) {
-            return false;
+            continue;
         }
 
         hitInfo.normal = v0.normals;
@@ -28,17 +37,12 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         Vector3 planar = v0.position - ray.direction;
         hitInfo.distance = glm::dot(planar, v0.normals);
         if (hitInfo.distance <= 0.0) {
-            return false;
+            continue;
         }
 
         /* Planar Intersection Point */
         hitInfo.position = ray.origin + ray.direction * static_cast<f32>(hitInfo.distance);
-        /* ReWritten Notes */
-        /* 1. Calculate the Area of the Triangle: Cross product of v0 and v1.
-           2. Calculate the Area of the Triangle of Hit - v1 and v2 - v1.
-           3. Using the Area of the Original Triangle and our current Triangle. Find out much of the area of the current triangle
-           takes up of the original triangle as a percentage. 
-         */
+ 
         /* Calculate the barycentric coordinates for that given point.  */
         Vector3 e0 = v1.position - v0.position;
         Vector3 e1 = v2.position - v0.position;
@@ -53,32 +57,24 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         f32 denominator = d00 * d11 - d01 * d01;
 
         f32 w1 = (d11 * d20 - d01 * d21) / denominator;
+        if (w1 < 0.0f) {
+            continue;
+        };
+
         f32 w2 = (d00 * d21 - d01 * d20) / denominator;
-        f32 w0 = 1 - w1 - w2;
+        if (w2 < 0.0f) {
+            continue;
+        };
 
-        /* Calculate the barycentric coordinates for that given point.  */
-        Vector3 C;
-        f64 u, v, w;
+        f32 w0 = 1.0f - w1 - w2;
+        if (w0 < 0.0f) {
+            continue;
+        };
 
-        Vector3 v1p = hitInfo.position - v1.position;
-        Vector3 v1v2 = v2.position - v1.position;
-        C = glm::cross(v1v2, v1p);
-        if ((u = glm::dot(v0.normals, C)) < 0.0) {
-            return false;
-        }
+        f32 combined = abs(w1 + w2 + w0);
 
-        Vector3 v2p = hitInfo.position - v2.position;
-        Vector3 v2v0 = v0.position - v2.position;
-        C = glm::cross(v2v0, v2p);
-        if ((v = glm::dot(v0.normals, C)) < 0.0) {
-            return false;
-        }
-
-        Vector3 v0p = hitInfo.position - v0.position;
-        Vector3 v0v1 = v1.position - v0.position;
-        C = glm::cross(v0v1, v0p);
-        if ((w = glm::dot(v0.normals, C)) < 0.0) {
-            return false;
+        if (combined >= (1.0f + kThreshold) && combined <= (1.0f - kThreshold)) {
+            continue;
         }
         
         /* Append Extra Shape Info to HitInfo */
@@ -95,10 +91,10 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         thisTriangle->v1 = v1;
         thisTriangle->v2 = v2;
 
-        return true;
+        return true; /* Found a Triangle Hit */
     }
 
-    return false;
+    return false; /* Didn't find a Triangle Hit */
 };
 
 Mesh Mesh::ColorfulTriangle() {
@@ -139,6 +135,96 @@ Mesh Mesh::ColorfulTriangle() {
     //triangleMesh.m_position = Point3(0.0f, 0.0f, 0.0f);
 
     return triangleMesh;
+};
+
+std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
+    std::vector<Mesh> outputScene;
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(filepath,
+                                    aiProcess_CalcTangentSpace  |
+                                    aiProcess_Triangulate);
+
+    if (scene == nullptr) {
+        std::printf("Mesh.cpp: Failed to Read Model: %s\n", importer.GetErrorString());
+    };
+
+    /* Find each node that contains a mesh. */
+    std::vector<aiNode*> nodesWithMeshes;
+    auto findMesh = [&](auto&& self, aiNode* node) {
+        if (!node)
+            return nullptr;
+        
+        if (node->mNumChildren > 0) {
+            for (i32 i = 0; i < node->mNumChildren; i++) {
+                self(self, node->mChildren[i]);
+            };
+        }
+
+        if (node->mNumMeshes > 0)
+            nodesWithMeshes.push_back(node);
+        
+        return nullptr;
+    };
+    findMesh(findMesh, scene->mRootNode);
+
+    /* Fill Vertex */
+    VertexInfo info{};
+    for (auto node : nodesWithMeshes) {
+        auto meshCount = node->mNumMeshes;
+        for (i32 i = 0; i < meshCount; i++) {
+            Mesh meshObject;
+
+            auto index = node->mMeshes[i];
+            auto mesh = scene->mMeshes[index];
+
+            if (mesh->HasPositions() && !info.hasPosition) {
+                info.hasPosition = true;
+            }
+
+            if (mesh->HasNormals() && !info.hasNormals) {
+                info.hasNormals = true;
+            }
+            
+            auto uvCount = mesh->GetNumUVChannels();
+            for (i32 j = 0; j < uvCount; j++) {
+                if (mesh->HasTextureCoords(j) && !info.hasTextureUVs) {
+                    info.hasTextureUVs = true;
+                }
+            };
+
+            meshObject.m_info = info;
+
+            auto vertexCount = mesh->mNumVertices;
+            for (i32 v = 0; v < vertexCount; v++) {
+                Vertex vertex;
+                if (info.hasPosition) {
+                    auto position = mesh->mVertices[v];
+                    vertex.position = Point3(position.x, position.y, position.z);
+                }
+
+                if (info.hasNormals) {
+                    auto normals = mesh->mNormals[v];
+                    vertex.normals = Point3(normals.x, normals.y, normals.z);
+                }
+
+                if (info.hasTextureUVs) {
+                    for (i32 a = 0; a < uvCount; a++) {
+                        if (mesh->HasTextureCoords(a)) {
+                            auto uv = mesh->mTextureCoords[v][a];
+                            vertex.textureUV = Point2(uv.x, uv.y);
+                        } else {
+                            vertex.textureUV = Point2(0.0f, 0.0f);
+                        }
+                    }
+                }
+
+                meshObject.m_vertices.push_back(vertex);
+                meshObject.m_indices.push_back(static_cast<u64>(v));
+                outputScene.push_back(meshObject);
+            }
+        }
+    }
+    return outputScene;
 };
 
 }

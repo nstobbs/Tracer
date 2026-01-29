@@ -8,7 +8,7 @@ class Surface {
 public:
     ~Surface() = default;
 
-    Color4 virtual calculateSurfaceColor(const HitInfo& info) = 0;
+    Color4 virtual CalculateColor(const HitInfo& info) = 0;
 
 protected:
 
@@ -17,7 +17,12 @@ protected:
 /* TODO: Move theses surfaces into they our files */
 class VertexColor : public Surface {
 public:
-    Color4 calculateSurfaceColor(const HitInfo& info) override;
+    Color4 CalculateColor(const HitInfo& info) override;
+};
+
+class PreviewNormals : public Surface {
+public:
+    Color4 CalculateColor(const HitInfo& info) override;
 };
 
 

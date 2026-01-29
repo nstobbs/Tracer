@@ -10,7 +10,7 @@ namespace {
 }
 
 Engine::Engine() {
-    m_pool = std::make_unique<ThreadPool>(12);
+    m_pool = std::make_unique<ThreadPool>(1);
     m_tasker = std::make_unique<Tasker>(this);
 }
 
@@ -100,7 +100,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) {
     HitInfo info;
     for (auto object : scene) {
         if (object->isHit(ray, info, Interval(), *m_camera)) {
-            color = object->getSurface()->calculateSurfaceColor(info);
+            color = object->GetSurface()->CalculateColor(info);
         };
     }
 

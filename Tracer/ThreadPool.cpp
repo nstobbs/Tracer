@@ -4,12 +4,12 @@ namespace Tracer {
 
 ThreadPool::ThreadPool(size_t numThreads) {
     for (i32 threadID = 0; threadID < numThreads; threadID++) {
-        std::printf("Createing Thread: %i\n", threadID);
+        //std::printf("Createing Thread: %i\n", threadID);
         m_threads.emplace_back([this, threadID] {
             while (true) {
                 std::function<void()> task;
                 {
-                    std::printf("Locking...ThreadID: %i\n", threadID);
+                    //std::printf("Locking...ThreadID: %i\n", threadID);
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
                     m_cv.wait(lock, [this] {
                         return !m_tasks.empty() || m_stop;
@@ -19,11 +19,11 @@ ThreadPool::ThreadPool(size_t numThreads) {
                         return;
                     }
 
-                    std::printf("Taking Task...ThreadID: %i\n", threadID);
+                    //std::printf("Taking Task...ThreadID: %i\n", threadID);
                     task = std::move(m_tasks.front());
                     m_tasks.pop();
                 }
-                std::printf("Executing Task...ThreadID: %i\n", threadID);
+                //std::printf("Executing Task...ThreadID: %i\n", threadID);
                 if(!task) {
                     std::printf("Empty Function was called!.. ThreadID: %i\n", threadID);
                     __debugbreak();
@@ -58,8 +58,10 @@ void ThreadPool::sumbitTask(std::function<void()> task) {
 
 void ThreadPool::clearQueue() {
     {
+        //std::printf("Clearing the Render Queue.\n");
         std::unique_lock<std::mutex> lock (m_queue_mutex);
-        if (auto size = m_tasks.size() != 0) {
+        int size = m_tasks.size();
+        if (size != 0) {
             for (int i = 0; i < size; i++) {
                 m_tasks.pop();
             }

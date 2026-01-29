@@ -44,7 +44,7 @@ private:
     Vector3 SampleSquare() const;
 
     u32 m_samplesPerPixel = {10};
-    u32 m_bucketSize = {32};
+    u32 m_bucketSize = {64};
 
     bool m_isRunning = {false};
 

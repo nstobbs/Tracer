@@ -4,8 +4,10 @@
 #include <iostream>
 
 namespace {
-    const int kWindowWidth = 640;
-    const int kWindowHeight = 480;
+    const bool kHalfRes = false;
+
+    constexpr int kWindowWidth = kHalfRes ? 640 / 2 : 640;
+    constexpr int kWindowHeight = kHalfRes ? 480 / 2 : 480;
     const std::string kWindowTitle = "Tracer MainWindow";
 }
 
@@ -29,8 +31,9 @@ Application::Application() {
     m_engine = std::make_unique<Tracer::Engine>();
     m_scene = std::make_unique<Tracer::Scene>();
     m_camera = std::make_unique<Tracer::Camera>();
-    auto mesh = Tracer::Mesh::ColorfulTriangle();
-    auto surface = Tracer::VertexColor();
+
+    Tracer::Mesh mesh = Tracer::Mesh::ColorfulTriangle();
+    Tracer::VertexColor surface = Tracer::VertexColor();
     mesh.SetSurface(&surface);
 
     m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
@@ -63,6 +66,10 @@ Application::Application() {
                     m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eForward);
                 } else if (event.key.keysym.sym == SDLK_DOWN) {
                     m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eBackward);
+                } else if (event.key.keysym.sym == SDLK_LEFT) {
+                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eLeft);
+                } else if (event.key.keysym.sym == SDLK_RIGHT) {
+                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eRight);
                 }
             }
         };

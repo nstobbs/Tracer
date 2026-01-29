@@ -11,7 +11,7 @@ class Object {
 public:
     bool virtual isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) = 0;
     void SetSurface(Surface* surface) { m_surface = surface; };  
-    Surface* getSurface() { return m_surface; };
+    Surface* GetSurface() { return m_surface; };
 
 protected:
     Surface* m_surface = {nullptr};
