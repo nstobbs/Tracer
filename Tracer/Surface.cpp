@@ -2,7 +2,7 @@
 
 namespace Tracer {
 
-Color4 VertexColor::CalculateColor(const HitInfo& info) {
+Color4 SurfaceShader::VertexColor::CalculateColor(const HitInfo& info) {
     Color4 output(0.0f, 0.0f, 0.0f, 0.0f);
     if (info.type == ShapeType::eTriangle) {
         Vertex v0, v1, v2;
@@ -23,7 +23,7 @@ Color4 VertexColor::CalculateColor(const HitInfo& info) {
     return output;
 };
 
-Color4 PreviewNormals::CalculateColor(const HitInfo& info) {
+Color4 SurfaceShader::PreviewNormals::CalculateColor(const HitInfo& info) {
     Color4 output(0.0f, 0.0f, 0.0f, 1.0f);
     if (info.type == ShapeType::eTriangle) {
         Vertex v0, v1, v2;
@@ -36,13 +36,13 @@ Color4 PreviewNormals::CalculateColor(const HitInfo& info) {
         v = info.extra.pTriangle->v;
         w = info.extra.pTriangle->w;
 
-        output = Color4(v0.normals, 1.0f) * static_cast<f32>(u);
-        output += Color4(v1.normals, 1.0f) * static_cast<f32>(v);
-        output += Color4(v2.normals, 1.0f) * static_cast<f32>(w);
+        output = Color4(-v0.normals, 1.0f) * static_cast<f32>(u);
+        output += Color4(-v1.normals, 1.0f) * static_cast<f32>(v);
+        output += Color4(-v2.normals, 1.0f) * static_cast<f32>(w);
         output.w = 1.0f;
     };
-    
-    return output;
+
+    return Color4(1.0f, 0.0f, 0.0f, 1.0f);
 };
 
 }

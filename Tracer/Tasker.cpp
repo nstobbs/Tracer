@@ -104,8 +104,10 @@ std::queue<BucketTask> Tasker::sortBuckets(std::queue<BucketTask> queue, BucketO
                     BucketTask task = queue.front();
                     queue.pop();
 
-                    Point2 taskPosition = Point2(static_cast<f32>(task.x),
-                                                 static_cast<f32>(task.y));
+                    f32 bucketOffset = m_engine->m_bucketSize / 2.0f;
+
+                    Point2 taskPosition = Point2(static_cast<f32>(task.x + bucketOffset),
+                                                 static_cast<f32>(task.y - bucketOffset));
                     Point2 delta = imageCenter - taskPosition;
                     delta.x = delta.x * delta.x;
                     delta.y = delta.y * delta.y;

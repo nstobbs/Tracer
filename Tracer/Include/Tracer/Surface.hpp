@@ -14,6 +14,8 @@ protected:
 
 };
 
+namespace SurfaceShader {
+
 /* TODO: Move theses surfaces into they our files */
 class VertexColor : public Surface {
 public:
@@ -23,7 +25,9 @@ public:
 class PreviewNormals : public Surface {
 public:
     Color4 CalculateColor(const HitInfo& info) override;
+
 };
 
 
+}
 }

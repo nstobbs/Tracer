@@ -1,10 +1,12 @@
+//#define mSimpleScene
+
 #include "Application/Application.hpp"
 #include "Tracer/Mesh.hpp"
 
 #include <iostream>
 
 namespace {
-    const bool kHalfRes = false;
+    const bool kHalfRes = true;
 
     constexpr int kWindowWidth = kHalfRes ? 640 / 2 : 640;
     constexpr int kWindowHeight = kHalfRes ? 480 / 2 : 480;
@@ -32,11 +34,24 @@ Application::Application() {
     m_scene = std::make_unique<Tracer::Scene>();
     m_camera = std::make_unique<Tracer::Camera>();
 
-    Tracer::Mesh mesh = Tracer::Mesh::ColorfulTriangle();
-    Tracer::VertexColor surface = Tracer::VertexColor();
-    mesh.SetSurface(&surface);
+    
 
+#ifdef mSimpleScene
+
+    auto surface = Tracer::SurfaceShader::PreviewNormals();
+    auto meshes = Tracer::Mesh::ReadFile("./Models/cube.obj");
+    for (auto& mesh : meshes) {
+        mesh.SetSurface(&surface);
+        m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
+    }
+#else
+    auto surface = Tracer::SurfaceShader::VertexColor();
+    auto mesh = Tracer::Mesh::ColorfulTriangle();
+    mesh.SetSurface(&surface);
     m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
+
+#endif
+
     m_scene->AddSurface(&surface);
     
     m_engine->SetScene(m_scene.get());

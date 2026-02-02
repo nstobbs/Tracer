@@ -1,6 +1,8 @@
 #include "Tracer/Engine.hpp"
 #include <cmath>
 #include <chrono>
+
+#define GLM_FORCE_LEFT_HANDED
 #include <glm/geometric.hpp>
 
 namespace Tracer {
@@ -10,7 +12,7 @@ namespace {
 }
 
 Engine::Engine() {
-    m_pool = std::make_unique<ThreadPool>();
+    m_pool = std::make_unique<ThreadPool>(1);
     m_tasker = std::make_unique<Tasker>(this);
 }
 
@@ -97,6 +99,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) {
     /* Missed Colour */
     auto color = m_missedColor;
 
+    /* Check for any hits */
     auto scene = m_scene->GetObjects();
     HitInfo info;
     for (auto object : scene) {

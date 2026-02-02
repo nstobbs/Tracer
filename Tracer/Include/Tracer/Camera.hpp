@@ -26,8 +26,8 @@ public:
     u64 GetCameraVersion() { return m_version; };
 
 private:
-    Point3 m_position = {0.0f, 0.0f, 0.0f};
-    Vector3 m_lookAt = {0.0f, 1.0f, -2.5f};
+    Point3 m_position = {0.0f, 1.0f, -2.0f};
+    Vector3 m_lookAt = {0.0f, 0.0f, 0.0f};
 
     Vector3 m_Up = {0.0f, 1.0f, 0.0f};
     f32 m_fov = {90.0f};

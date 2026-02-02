@@ -5,6 +5,8 @@
 #include <assimp/postprocess.h>
 #include <cmath>
 
+//#define mDebugPrint
+
 namespace {
     const Tracer::f64 kThreshold = 0.01;
 }
@@ -20,11 +22,31 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
     u64 triangleCount = indexCount / 3;
     for (u64 i = 0; i < triangleCount; i++) {
+        u64 triangleIndex = 3 * i;
 
         /* Transform From World to Camera Space */
-        Vertex v0 = multiply(view, m_vertices.at(i));
-        Vertex v1 = multiply(view, m_vertices.at(i+1));
-        Vertex v2 = multiply(view, m_vertices.at(i+2));
+        Matrix4 idMatrix = glm::mat4(1.0f);
+        //idMatrix[0][0] = 0.5f;
+        //idMatrix[1][1] = 0.5f;
+        //idMatrix[2][2] = 0.5f;
+
+        Vertex v0 = multiply(idMatrix, m_vertices.at(triangleIndex));
+        Vertex v1 = multiply(idMatrix, m_vertices.at(triangleIndex+1));
+        Vertex v2 = multiply(idMatrix, m_vertices.at(triangleIndex+2));
+
+        #ifdef mDebugPrint
+
+        // Debug Printing
+        std::printf("#################### Triangle: %llu ####################\n", i);
+        std::printf("v0 Positions: %.6f, %.6f, %.6f | Normals: %.6f, %.6f, %.6f.\n", v0.position.x, 
+        v0.position.y, v0.position.z, v0.normals.x, v0.normals.y, v0.normals.z);
+        std::printf("v1 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v1.position.x, 
+        v1.position.y, v1.position.z, v1.normals.x, v1.normals.y, v1.normals.z);
+        std::printf("v2 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v2.position.x, 
+        v2.position.y, v2.position.z, v2.normals.x, v2.normals.y, v2.normals.z);
+        std::printf("\n");
+
+        #endif
 
         /* Check if the  Ray is Parallel Lines */
         if (glm::dot(ray.direction, v0.normals) <= kThreshold) {
@@ -109,15 +131,20 @@ Mesh Mesh::ColorfulTriangle() {
     Vertex B;
     Vertex C;
     std::vector<Vertex> vertices;
-
+    
+    /* Clock Wise Vertex Winding */
+    /* Z- Is towards the Camera - Meaning this is Left Handed */
+    /* Red Vertex */
     A.position = Point3(0.0f, 1.0f, -2.5f);
     A.normals = Vector3(0.0f, 0.0f, -1.0f);
     A.color = Color4(1.0f, 0.0f, 0.0f, 1.0f);
 
+    /* Green Vertex */
     B.position = Point3(0.75f, 0.0f, -2.5f);
     A.normals = Vector3(0.0f, 0.0f, -1.0f);
     B.color = Color4(0.0f, 1.0f, 0.0f, 1.0f);
 
+    /* Blue Vertex */
     C.position = Point3(-0.75f, 0.0f, -2.5f);
     A.normals = Vector3(0.0f, 0.0f, -1.0f);
     C.color = Color4(0.0f, 0.0f, 1.0f, 1.0f);
@@ -141,9 +168,12 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filepath,
                                     aiProcess_CalcTangentSpace  |
-                                    aiProcess_Triangulate);
+                                    aiProcess_Triangulate   |
+                                    aiProcess_FlipWindingOrder  |
+                                    aiProcess_MakeLeftHanded |
+                                    aiProcess_SortByPType);
 
-    if (scene == nullptr) {
+    if (!scene) {
         std::printf("Mesh.cpp: Failed to Read Model: %s\n", importer.GetErrorString());
     };
 
@@ -192,9 +222,8 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
             };
 
             meshObject.m_info = info;
-
             auto vertexCount = mesh->mNumVertices;
-            for (i32 v = 0; v < vertexCount; v++) {
+            for (u64 v = 0; v < vertexCount; v++) {
                 Vertex vertex;
                 if (info.hasPosition) {
                     auto position = mesh->mVertices[v];
@@ -203,13 +232,13 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
 
                 if (info.hasNormals) {
                     auto normals = mesh->mNormals[v];
-                    vertex.normals = Point3(normals.x, normals.y, normals.z);
+                    vertex.normals = Vector3(normals.x, normals.y, normals.z);
                 }
 
                 if (info.hasTextureUVs) {
-                    for (i32 a = 0; a < uvCount; a++) {
+                    for (u32 a = 0; a < uvCount; a++) {
                         if (mesh->HasTextureCoords(a)) {
-                            auto uv = mesh->mTextureCoords[v][a];
+                            auto uv = mesh->mTextureCoords[a][v];
                             vertex.textureUV = Point2(uv.x, uv.y);
                         } else {
                             vertex.textureUV = Point2(0.0f, 0.0f);
@@ -218,9 +247,9 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 }
 
                 meshObject.m_vertices.push_back(vertex);
-                meshObject.m_indices.push_back(static_cast<u64>(v));
-                outputScene.push_back(meshObject);
+                meshObject.m_indices.push_back(v);
             }
+            outputScene.push_back(meshObject);
         }
     }
     return outputScene;
