@@ -9,7 +9,12 @@ Vertex multiply(Matrix4 matrix, Vertex vertex) {
     result.position.z = position.z;
     result.position.y = position.y;
 
-    result.normals = vertex.normals;
+    Vector4 normals = matrix * Vector4(vertex.normals, 1.0f);
+    result.normals.x = normals.x;
+    result.normals.y = normals.y;
+    result.normals.z = normals.z;
+
+   // result.normals = vertex.normals;
 
     result.color = vertex.color;
     result.textureUV = vertex.textureUV;

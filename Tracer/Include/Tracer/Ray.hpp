@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Tracer/Types.hpp"
-#include "Tracer/Surface.hpp"
 #include "Tracer/Vertex.hpp"
 
 namespace Tracer {

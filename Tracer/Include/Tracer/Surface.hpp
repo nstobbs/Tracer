@@ -2,21 +2,17 @@
 #include "Tracer/Types.hpp"
 #include "Tracer/Ray.hpp"
 
-namespace Tracer{
+namespace Tracer {
 
 class Surface {
 public:
     ~Surface() = default;
-
-    Color4 virtual CalculateColor(const HitInfo& info) = 0;
-
-protected:
-
+    virtual Color4 CalculateColor(const HitInfo& info) = 0;
 };
 
+// TODO: Move theses surfaces into they our files / folder!
 namespace SurfaceShader {
 
-/* TODO: Move theses surfaces into they our files */
 class VertexColor : public Surface {
 public:
     Color4 CalculateColor(const HitInfo& info) override;

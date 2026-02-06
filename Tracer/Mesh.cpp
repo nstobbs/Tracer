@@ -14,8 +14,6 @@ namespace {
 namespace Tracer {
 
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) {
-    Matrix4 view = camera.GetViewModel();
-
     /* Per Each Triangle Of this Mesh */
     u64 indexCount = m_indices.size();
     assert(indexCount % 3 == 0);
@@ -23,16 +21,9 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
     u64 triangleCount = indexCount / 3;
     for (u64 i = 0; i < triangleCount; i++) {
         u64 triangleIndex = 3 * i;
-
-        /* Transform From World to Camera Space */
-        Matrix4 idMatrix = glm::mat4(1.0f);
-        //idMatrix[0][0] = 0.5f;
-        //idMatrix[1][1] = 0.5f;
-        //idMatrix[2][2] = 0.5f;
-
-        Vertex v0 = multiply(idMatrix, m_vertices.at(triangleIndex));
-        Vertex v1 = multiply(idMatrix, m_vertices.at(triangleIndex+1));
-        Vertex v2 = multiply(idMatrix, m_vertices.at(triangleIndex+2));
+        Vertex v0 = m_vertices.at(triangleIndex);
+        Vertex v1 = m_vertices.at(triangleIndex+1);
+        Vertex v2 = m_vertices.at(triangleIndex+2);
 
         #ifdef mDebugPrint
 
@@ -48,24 +39,25 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
         #endif
 
-        /* Check if the  Ray is Parallel Lines */
-        if (glm::dot(ray.direction, v0.normals) <= kThreshold) {
+        /* Check if the  Ray is Parallel */
+        Vector3 v0v1 = v0.position - v1.position;
+        if (glm::dot(v0.normals, ray.direction) >= kThreshold) {
             continue;
         }
 
         hitInfo.normal = v0.normals;
 
-        /* Check where on the Plane of The Normals and Vertex A for the Intersection Of the Ray */
+        /* Check where on the Plane of The Normals and Vertex 0 for the Intersection Of the Ray */
         Vector3 planar = v0.position - ray.direction;
         hitInfo.distance = glm::dot(planar, v0.normals);
-        if (hitInfo.distance <= 0.0) {
+        if (hitInfo.distance <= 0.0f) {
             continue;
         }
 
         /* Planar Intersection Point */
         hitInfo.position = ray.origin + ray.direction * static_cast<f32>(hitInfo.distance);
  
-        /* Calculate the barycentric coordinates for that given point.  */
+        /* Calculate the barycentric coordinates for that given point.*/
         Vector3 e0 = v1.position - v0.position;
         Vector3 e1 = v2.position - v0.position;
         Vector3 e2 = hitInfo.position - v0.position;
@@ -77,6 +69,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         f32 d21 = glm::dot(e2, e1);
 
         f32 denominator = d00 * d11 - d01 * d01;
+        hitInfo.isFrontFace = (denominator >= 0.0f);
 
         f32 w1 = (d11 * d20 - d01 * d21) / denominator;
         if (w1 < 0.0f) {
@@ -118,7 +111,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
     return false; /* Didn't find a Triangle Hit */
 };
 
-Mesh Mesh::ColorfulTriangle() {
+Mesh Mesh::TriangleMesh() {
     Mesh triangleMesh;
     VertexInfo info {
         .hasPosition = true,
@@ -132,22 +125,22 @@ Mesh Mesh::ColorfulTriangle() {
     Vertex C;
     std::vector<Vertex> vertices;
     
-    /* Clock Wise Vertex Winding */
-    /* Z- Is towards the Camera - Meaning this is Left Handed */
+    /* CounterClockWise Winding*/
     /* Red Vertex */
-    A.position = Point3(0.0f, 1.0f, -2.5f);
-    A.normals = Vector3(0.0f, 0.0f, -1.0f);
+    A.position = Point3(0.0f, 1.0f, 2.5f);
+    A.normals = Vector3(0.0f, 0.0f, 1.0f);
     A.color = Color4(1.0f, 0.0f, 0.0f, 1.0f);
 
-    /* Green Vertex */
-    B.position = Point3(0.75f, 0.0f, -2.5f);
-    A.normals = Vector3(0.0f, 0.0f, -1.0f);
-    B.color = Color4(0.0f, 1.0f, 0.0f, 1.0f);
-
     /* Blue Vertex */
-    C.position = Point3(-0.75f, 0.0f, -2.5f);
-    A.normals = Vector3(0.0f, 0.0f, -1.0f);
-    C.color = Color4(0.0f, 0.0f, 1.0f, 1.0f);
+    B.position = Point3(-0.75f, 0.0f, 2.5f);
+    B.normals = Vector3(0.0f, 0.0f, 1.0f);
+    B.color = Color4(0.0f, 0.0f, 1.0f, 1.0f);
+
+    /* Green Vertex */
+    C.position = Point3(0.75f, 0.0f, 2.5f);
+    C.normals = Vector3(0.0f, 0.0f, 1.0f);
+    C.color = Color4(0.0f, 1.0f, 0.0f, 1.0f);
+    
     
     vertices.push_back(A);
     vertices.push_back(B);
@@ -168,9 +161,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filepath,
                                     aiProcess_CalcTangentSpace  |
-                                    aiProcess_Triangulate   |
-                                    aiProcess_FlipWindingOrder  |
-                                    aiProcess_MakeLeftHanded |
+                                    aiProcess_Triangulate |
                                     aiProcess_SortByPType);
 
     if (!scene) {
@@ -223,22 +214,22 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
 
             meshObject.m_info = info;
             auto vertexCount = mesh->mNumVertices;
-            for (u64 v = 0; v < vertexCount; v++) {
+            for (u64 index = 0; index < vertexCount; index++) {
                 Vertex vertex;
                 if (info.hasPosition) {
-                    auto position = mesh->mVertices[v];
+                    auto position = mesh->mVertices[index];
                     vertex.position = Point3(position.x, position.y, position.z);
                 }
 
                 if (info.hasNormals) {
-                    auto normals = mesh->mNormals[v];
+                    auto normals = mesh->mNormals[index];
                     vertex.normals = Vector3(normals.x, normals.y, normals.z);
                 }
 
                 if (info.hasTextureUVs) {
                     for (u32 a = 0; a < uvCount; a++) {
                         if (mesh->HasTextureCoords(a)) {
-                            auto uv = mesh->mTextureCoords[a][v];
+                            auto uv = mesh->mTextureCoords[a][index];
                             vertex.textureUV = Point2(uv.x, uv.y);
                         } else {
                             vertex.textureUV = Point2(0.0f, 0.0f);
@@ -247,7 +238,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 }
 
                 meshObject.m_vertices.push_back(vertex);
-                meshObject.m_indices.push_back(v);
+                meshObject.m_indices.push_back(index);
             }
             outputScene.push_back(meshObject);
         }

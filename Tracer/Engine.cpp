@@ -2,17 +2,19 @@
 #include <cmath>
 #include <chrono>
 
-#define GLM_FORCE_LEFT_HANDED
 #include <glm/geometric.hpp>
 
 namespace Tracer {
 
 namespace {
     const f64 kPi = 3.1415926535897932385;
+    constexpr bool kSingleThreaded = true;
 }
 
 Engine::Engine() {
-    m_pool = std::make_unique<ThreadPool>(1);
+    constexpr int threadCount = (kSingleThreaded) ? 1 : 12;
+    std::printf("Tracer::Engine - ThreadCount: %i\n", threadCount);
+    m_pool = std::make_unique<ThreadPool>(threadCount);
     m_tasker = std::make_unique<Tasker>(this);
 }
 
@@ -50,9 +52,10 @@ void Engine::StopRendering() {
     m_isRunning = false;
 }
 
+
 void Engine::Tick() {
     if (m_isRunning) {
-        if (m_version != m_prevVersion || m_prevCameraVersion != m_camera->GetCameraVersion()) {
+        if (m_version != m_prevVersion || m_prevCameraVersion != m_camera->GetCameraVersion()) { // TODO: Clean this up.
             m_prevVersion = m_version;
             m_prevCameraVersion = m_camera->GetCameraVersion();
             m_tasker->SubmitFrameToPool();
@@ -78,6 +81,8 @@ Ray Engine::GetRay(u32 x, u32 y) const {
     f32 Px = (2 * ((x + 0.5) / width) - 1) * tan(fov / 2 * kPi / 180) * aspectRatio;
     f32 Py = (1 - 2 * ((y + 0.5) / height)) * tan(fov / 2 * kPi / 180);
     Point3 origin = Point3(0.0f, 0.0f, 0.0f);
+    /* The Direction of the ray are facing into the -Z. And Z+
+    will be pointing towards into the Screen. A Right-Handed System */
     Vector3 direction = glm::normalize(Vector3(Px, Py, -1.0f));
     Ray ray(origin, direction);
     return ray;
@@ -94,6 +99,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) {
     }
 
     /* !RayTracing! */
+    //Ray ray = m_camera->TransformRay(GetRay(x, y));
     Ray ray = GetRay(x, y);
 
     /* Missed Colour */

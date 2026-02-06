@@ -1,12 +1,10 @@
-//#define mSimpleScene
-
 #include "Application/Application.hpp"
 #include "Tracer/Mesh.hpp"
 
 #include <iostream>
 
 namespace {
-    const bool kHalfRes = true;
+    const bool kHalfRes = false;
 
     constexpr int kWindowWidth = kHalfRes ? 640 / 2 : 640;
     constexpr int kWindowHeight = kHalfRes ? 480 / 2 : 480;
@@ -24,6 +22,7 @@ Application::Application() {
     if (!m_window) {
         std::printf("{Error} SDL Failed to Create Window: %s\n", SDL_GetError());
     }
+
     m_windowRenderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_SOFTWARE);
     if (!m_windowRenderer) {
         std::printf("{Error} SDL Failed to Create Window Renderer: %s\n", SDL_GetError());
@@ -34,9 +33,7 @@ Application::Application() {
     m_scene = std::make_unique<Tracer::Scene>();
     m_camera = std::make_unique<Tracer::Camera>();
 
-    
-
-#ifdef mSimpleScene
+#if 0
 
     auto surface = Tracer::SurfaceShader::PreviewNormals();
     auto meshes = Tracer::Mesh::ReadFile("./Models/cube.obj");
@@ -44,9 +41,10 @@ Application::Application() {
         mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
     }
+    
 #else
     auto surface = Tracer::SurfaceShader::VertexColor();
-    auto mesh = Tracer::Mesh::ColorfulTriangle();
+    auto mesh = Tracer::Mesh::TriangleMesh();
     mesh.SetSurface(&surface);
     m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
 
@@ -66,7 +64,7 @@ Application::Application() {
 
     m_engine->SetImage(m_image.get());
     m_engine->SetTargetLayer(renderLayer);
-
+    m_engine->SetSamplesPerPixel(32);
     m_engine->StartRendering();
 
     /* Main Loop */
