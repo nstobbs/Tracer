@@ -22,5 +22,4 @@ private:
     std::vector<Object*> m_objects;
     std::vector<Surface*> m_surfaces;
 };
-
 };

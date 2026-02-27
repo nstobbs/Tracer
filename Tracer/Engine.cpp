@@ -8,7 +8,7 @@ namespace Tracer {
 
 namespace {
     const f64 kPi = 3.1415926535897932385;
-    constexpr bool kSingleThreaded = true;
+    constexpr bool kSingleThreaded = false;
 }
 
 Engine::Engine() {
@@ -58,12 +58,13 @@ void Engine::Tick() {
         if (m_version != m_prevVersion || m_prevCameraVersion != m_camera->GetCameraVersion()) { // TODO: Clean this up.
             m_prevVersion = m_version;
             m_prevCameraVersion = m_camera->GetCameraVersion();
+            m_tasker->SetBucketOrder(BucketOrder::eCenterOut);
             m_tasker->SubmitFrameToPool();
         }
     }
 }
 
-void Engine::RenderBucket(u32 x, u32 y) {
+void Engine::RenderBucket(u32 x, u32 y) const {
     for (u32 bY = 0; bY < m_bucketSize; bY++) {
         for (u32 bX = 0; bX < m_bucketSize; bX++) {
             CalculatePixelColor(x+bX, y+bY);
@@ -72,18 +73,20 @@ void Engine::RenderBucket(u32 x, u32 y) {
 }
 
 Ray Engine::GetRay(u32 x, u32 y) const {
+    /* Tracer::Image - 0, 0 is the Top Left Pixel. 
+    Viewport -1.0f, 1.0f is the Top Left Pixel */
+
     f32 width = m_image->GetWidth();
     f32 height =  m_image->GetHeight();
+
     f32 aspectRatio = width / height;
+    f32 focalLength = m_camera->GetFocalLength();
 
-    f32 fov = m_camera->GetFoV();
+    f32 ndcX = (-1.0f + ((static_cast<f32>(x) + 0.5f) * 2.0f / width));
+    f32 ndcY = (1.0f - ((static_cast<f32>(y) + 0.5f) * 2.0f / height));
 
-    f32 Px = (2 * ((x + 0.5) / width) - 1) * tan(fov / 2 * kPi / 180) * aspectRatio;
-    f32 Py = (1 - 2 * ((y + 0.5) / height)) * tan(fov / 2 * kPi / 180);
-    Point3 origin = Point3(0.0f, 0.0f, 0.0f);
-    /* The Direction of the ray are facing into the -Z. And Z+
-    will be pointing towards into the Screen. A Right-Handed System */
-    Vector3 direction = glm::normalize(Vector3(Px, Py, -1.0f));
+    Point3 origin = Point3(0.0f, 0.0f, -2.0f);
+    Vector3 direction = glm::normalize(Vector3((ndcX * aspectRatio), ndcY, focalLength));
     Ray ray(origin, direction);
     return ray;
 };
@@ -92,23 +95,23 @@ Color4 Engine::GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene*
     return Color4(0.0f);
 }
 
-void Engine::CalculatePixelColor(u32 x, u32 y) {
+void Engine::CalculatePixelColor(u32 x, u32 y) const {
     /* Check Image Bounding Box */
     if (x > m_image->GetWidth() || y > m_image->GetHeight()) {
         return;
     }
 
     /* !RayTracing! */
-    //Ray ray = m_camera->TransformRay(GetRay(x, y));
-    Ray ray = GetRay(x, y);
+    Ray ray = m_camera->TransformRay(GetRay(x, y));
+    //Ray ray = GetRay(x, y);
 
     /* Missed Colour */
     auto color = m_missedColor;
 
     /* Check for any hits */
     auto scene = m_scene->GetObjects();
-    HitInfo info;
-    for (auto object : scene) {
+    HitInfo info{};
+    for (auto& object : scene) {
         if (object->isHit(ray, info, Interval(), *m_camera)) {
             color = object->GetSurface()->CalculateColor(info);
         };

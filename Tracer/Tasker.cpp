@@ -123,13 +123,13 @@ std::queue<BucketTask> Tasker::sortBuckets(std::queue<BucketTask> queue, BucketO
         }
     }
 
-    return queue;
+return queue;
 };
 
 void Tasker::execute() {
     m_submittingFrame = true;
     std::queue<BucketTask> tasks = createBucketsQueue();
-    tasks = sortBuckets(tasks, BucketOrder::eCenterOut);
+    tasks = sortBuckets(tasks, m_bucketOrder);
     while (!tasks.empty()) {
         m_engine->m_pool->sumbitTask(std::move(tasks.front().task));
         tasks.pop();

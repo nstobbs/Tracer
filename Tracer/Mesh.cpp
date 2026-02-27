@@ -13,6 +13,10 @@ namespace {
 
 namespace Tracer {
 
+Mesh::Mesh() {
+    //m_container = BVH::Container<Mesh, Vertex>(this);
+}
+
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) {
     /* Per Each Triangle Of this Mesh */
     u64 indexCount = m_indices.size();
@@ -20,10 +24,11 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
     u64 triangleCount = indexCount / 3;
     for (u64 i = 0; i < triangleCount; i++) {
-        u64 triangleIndex = 3 * i;
-        Vertex v0 = m_vertices.at(triangleIndex);
-        Vertex v1 = m_vertices.at(triangleIndex+1);
-        Vertex v2 = m_vertices.at(triangleIndex+2);
+        /* Get Triangle Vertices */
+        const u64 triangleIndex = 3 * i;
+        Vertex v0 = m_vertices.at(m_indices.at(triangleIndex));
+        Vertex v1 = m_vertices.at(m_indices.at(triangleIndex+1));
+        Vertex v2 = m_vertices.at(m_indices.at(triangleIndex+2));
 
         #ifdef mDebugPrint
 
@@ -39,28 +44,35 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
         #endif
 
-        /* Check if the  Ray is Parallel */
-        Vector3 v0v1 = v0.position - v1.position;
-        if (glm::dot(v0.normals, ray.direction) >= kThreshold) {
+        /* Generate Geometric Normals */
+        Vector3 edge0 = v1.position - v0.position;
+        Vector3 edge1 = v2.position - v0.position;
+        Vector3 triNormal = glm::normalize(glm::cross(edge0, edge1));
+
+        /* Check if the Ray is Parallel */
+        if (std::fabs(glm::dot(triNormal, ray.direction)) <= kThreshold) {
             continue;
         }
 
-        hitInfo.normal = v0.normals;
-
-        /* Check where on the Plane of The Normals and Vertex 0 for the Intersection Of the Ray */
-        Vector3 planar = v0.position - ray.direction;
-        hitInfo.distance = glm::dot(planar, v0.normals);
-        if (hitInfo.distance <= 0.0f) {
+        /* Calculate the Distance of the Ray and the intersection of the triangles plane  */
+        f32 distance = glm::dot(triNormal, (v0.position - ray.origin)) /
+                                    glm::dot(triNormal, ray.direction);
+        if (distance < 0.0f && interval.Contains(distance)) {
             continue;
         }
 
-        /* Planar Intersection Point */
-        hitInfo.position = ray.origin + ray.direction * static_cast<f32>(hitInfo.distance);
+        /* Check if we already have a closer hit recorded */
+        if (hitInfo.hasHit && distance >= hitInfo.distance) {
+            continue;
+        }
+
+        /* Calculate Hit Position on Triangle Plane */
+        Point3 hitPosition = ray.origin + ray.direction * static_cast<f32>(distance);
  
         /* Calculate the barycentric coordinates for that given point.*/
         Vector3 e0 = v1.position - v0.position;
         Vector3 e1 = v2.position - v0.position;
-        Vector3 e2 = hitInfo.position - v0.position;
+        Vector3 e2 = hitPosition - v0.position;
 
         f32 d00 = glm::dot(e0, e0);
         f32 d01 = glm::dot(e0, e1);
@@ -68,29 +80,34 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         f32 d20 = glm::dot(e2, e0);
         f32 d21 = glm::dot(e2, e1);
 
+        /* Check for Degenerate Triangles */
         f32 denominator = d00 * d11 - d01 * d01;
-        hitInfo.isFrontFace = (denominator >= 0.0f);
+        if (std::fabs(denominator) <= kThreshold) {
+            continue;
+        }
 
         f32 w1 = (d11 * d20 - d01 * d21) / denominator;
-        if (w1 < 0.0f) {
+        if (w1 < kThreshold) {
             continue;
         };
 
         f32 w2 = (d00 * d21 - d01 * d20) / denominator;
-        if (w2 < 0.0f) {
+        if (w2 < kThreshold) {
             continue;
         };
 
         f32 w0 = 1.0f - w1 - w2;
-        if (w0 < 0.0f) {
+        if (w0 < kThreshold) {
             continue;
         };
 
-        f32 combined = abs(w1 + w2 + w0);
-        if (combined >= (1.0f + kThreshold) && combined <= (1.0f - kThreshold)) {
-            continue;
-        }
-        
+        /* Record Hit Infomation */
+        hitInfo.hasHit = true;
+        hitInfo.position = hitPosition;
+        hitInfo.distance = distance;
+        hitInfo.normal = triNormal;
+        hitInfo.isFrontFace = (glm::dot(hitInfo.normal, ray.direction) < 0.0f);
+
         /* Append Extra Shape Info to HitInfo */
         Triangle* thisTriangle = new Triangle();
         ShapeGen extra;
@@ -104,11 +121,8 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         thisTriangle->v0 = v0;
         thisTriangle->v1 = v1;
         thisTriangle->v2 = v2;
-
-        return true; /* Found a Triangle Hit */
     }
-
-    return false; /* Didn't find a Triangle Hit */
+    return hitInfo.hasHit;
 };
 
 Mesh Mesh::TriangleMesh() {
@@ -127,24 +141,27 @@ Mesh Mesh::TriangleMesh() {
     
     /* CounterClockWise Winding*/
     /* Red Vertex */
-    A.position = Point3(0.0f, 1.0f, 2.5f);
+    A.position = Point3(0.0f, 1.0f, 2.0f);
     A.normals = Vector3(0.0f, 0.0f, 1.0f);
     A.color = Color4(1.0f, 0.0f, 0.0f, 1.0f);
 
     /* Blue Vertex */
-    B.position = Point3(-0.75f, 0.0f, 2.5f);
+    B.position = Point3(-0.75f, 0.0f, 2.0f);
     B.normals = Vector3(0.0f, 0.0f, 1.0f);
     B.color = Color4(0.0f, 0.0f, 1.0f, 1.0f);
 
     /* Green Vertex */
-    C.position = Point3(0.75f, 0.0f, 2.5f);
+    C.position = Point3(0.75f, 0.0f, 2.0f);
     C.normals = Vector3(0.0f, 0.0f, 1.0f);
     C.color = Color4(0.0f, 1.0f, 0.0f, 1.0f);
     
-    
     vertices.push_back(A);
-    vertices.push_back(B);
     vertices.push_back(C);
+    vertices.push_back(B);
+
+    for (auto& v : vertices) {
+        triangleMesh.m_bbox.Expand(v.position);
+    }
 
     triangleMesh.m_vertices = vertices;
 
@@ -160,9 +177,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
     std::vector<Mesh> outputScene;
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filepath,
-                                    aiProcess_CalcTangentSpace  |
-                                    aiProcess_Triangulate |
-                                    aiProcess_SortByPType);
+                                    aiProcess_Triangulate);
 
     if (!scene) {
         std::printf("Mesh.cpp: Failed to Read Model: %s\n", importer.GetErrorString());
@@ -219,6 +234,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 if (info.hasPosition) {
                     auto position = mesh->mVertices[index];
                     vertex.position = Point3(position.x, position.y, position.z);
+                    meshObject.m_bbox.Expand(vertex.position);
                 }
 
                 if (info.hasNormals) {
@@ -240,6 +256,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 meshObject.m_vertices.push_back(vertex);
                 meshObject.m_indices.push_back(index);
             }
+            //meshObject.m_container.BuildBVH();
             outputScene.push_back(meshObject);
         }
     }

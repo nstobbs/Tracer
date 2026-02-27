@@ -21,7 +21,7 @@ public:
     //f64 Clamp(f64 value) const { if(x < m_min) return m_min; if(x < m_max) return m_max; return x; }
     
 private:
-    double m_min, m_max;
+    f64 m_min, m_max;
 };
 
 }

@@ -53,7 +53,7 @@ private:
     bool m_stop = {false};
     bool m_submittingFrame = {false};
 
-    BucketOrder m_bucketOrder = {BucketOrder::eLeftToRight};
+    BucketOrder m_bucketOrder = {BucketOrder::eCenterOut};
 
     friend class Engine;
     Engine* m_engine = {nullptr};

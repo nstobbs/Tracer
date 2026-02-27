@@ -32,6 +32,7 @@ struct HitInfo {
     Vector3 normal;
     f64 distance;
     bool isFrontFace;
+    bool hasHit = {false};
 
     /* Extra Data Based of Different Shapes. */
     ShapeType type = {ShapeType::eNone};

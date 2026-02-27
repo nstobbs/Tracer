@@ -4,14 +4,18 @@
 #include <iostream>
 
 namespace {
+    const int kWidth = 640;
+    const int kHeight = 480;
     const bool kHalfRes = false;
 
-    constexpr int kWindowWidth = kHalfRes ? 640 / 2 : 640;
-    constexpr int kWindowHeight = kHalfRes ? 480 / 2 : 480;
+    constexpr int kWindowWidth = kHalfRes ? kWidth / 2 : kWidth;
+    constexpr int kWindowHeight = kHalfRes ? kHeight / 2 : kHeight;
     const std::string kWindowTitle = "Tracer MainWindow";
 }
 
 Application::Application() {
+    using namespace Tracer;
+
     /* Application Init */
     std::printf("Starting Application.\n");
     if (SDL_Init(SDL_INIT_VIDEO) != 0 && IMG_Init(IMG_INIT_PNG) != 0) {
@@ -29,24 +33,27 @@ Application::Application() {
     }
 
     /* Tracer Engine & Scene Setup */
-    m_engine = std::make_unique<Tracer::Engine>();
-    m_scene = std::make_unique<Tracer::Scene>();
-    m_camera = std::make_unique<Tracer::Camera>();
+    m_engine = std::make_unique<Engine>();
+    m_scene = std::make_unique<Scene>();
+    m_camera = std::make_unique<Camera>();
 
-#if 0
+#if 1
 
-    auto surface = Tracer::SurfaceShader::PreviewNormals();
-    auto meshes = Tracer::Mesh::ReadFile("./Models/cube.obj");
+    //auto surface = SurfaceShader::SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
+    auto surface = SurfaceShader::PreviewNormals();
+    auto meshes = Mesh::ReadFile("./Models/bunny.obj");
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);
-        m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
+        m_scene->AddObject(static_cast<Object*>(&mesh));
     }
     
 #else
-    auto surface = Tracer::SurfaceShader::VertexColor();
-    auto mesh = Tracer::Mesh::TriangleMesh();
+
+    //auto surface = SurfaceShader::SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
+    auto surface = SurfaceShader::VertexColor();
+    auto mesh = Mesh::TriangleMesh();
     mesh.SetSurface(&surface);
-    m_scene->AddObject(static_cast<Tracer::Object*>(&mesh));
+    m_scene->AddObject(static_cast<Object*>(&mesh));
 
 #endif
 
@@ -58,9 +65,9 @@ Application::Application() {
     /* Image Layer Setup */
     std::string renderLayer = "Color";
 
-    m_image = std::make_unique<Tracer::Image>(kWindowWidth, kWindowHeight);
+    m_image = std::make_unique<Image>(kWindowWidth, kWindowHeight);
     m_image->CreateLayer(renderLayer);
-    m_image->GetLayer(renderLayer)->FloodColor(Tracer::Color4(0.0f));
+    m_image->GetLayer(renderLayer)->FloodColor(Color4(0.0f));
 
     m_engine->SetImage(m_image.get());
     m_engine->SetTargetLayer(renderLayer);
@@ -76,13 +83,13 @@ Application::Application() {
                 m_shutdown = true;
             } else if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_UP) {
-                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eForward);
+                    m_camera->MoveCamera(1.0f, CameraDirection::eForward);
                 } else if (event.key.keysym.sym == SDLK_DOWN) {
-                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eBackward);
+                    m_camera->MoveCamera(1.0f, CameraDirection::eBackward);
                 } else if (event.key.keysym.sym == SDLK_LEFT) {
-                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eLeft);
+                    m_camera->MoveCamera(1.0f, CameraDirection::eLeft);
                 } else if (event.key.keysym.sym == SDLK_RIGHT) {
-                    m_camera->MoveCamera(1.0f, Tracer::CameraDirection::eRight);
+                    m_camera->MoveCamera(1.0f, CameraDirection::eRight);
                 }
             }
         };

@@ -20,19 +20,19 @@ public:
     Camera() = default;
     ~Camera() = default;
 
-    f32 GetFoV() {return m_fov;};
-    Vector3 GetUp() {return m_Up;};
-    Matrix4 GetViewMatrix();
+    f32 GetFocalLength() const {return m_focalLength;}; 
+    Vector3 GetUp() const {return m_Up;};
+    Matrix4 GetViewMatrix() const;
     void MoveCamera(f32 delta, CameraDirection direction);
-    u64 GetCameraVersion() { return m_version; };
-    Ray TransformRay(const Ray& cameraRay);
+    u64 GetCameraVersion() const { return m_version; };
+    Ray TransformRay(const Ray& cameraRay) const;
 
 private:
-    Point3 m_position = {1.0f, 0.0f, -2.0f};
-    Vector3 m_lookAt = {1.0f, 0.0f, 0.0f};
+    Point3 m_position = {0.0f, 0.0f, -2.0f};
+    Vector3 m_lookAt = {0.0f, 0.0f, 0.0f};
 
     Vector3 m_Up = {0.0f, 1.0f, 0.0f};
-    f32 m_fov = {90.0f};
+    f32 m_focalLength = {0.5f};
 
     u64 m_version = {0};
 };

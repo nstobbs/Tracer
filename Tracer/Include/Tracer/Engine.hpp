@@ -17,6 +17,7 @@
 */
 
 namespace Tracer {
+
 class Engine {
 public:
     Engine();
@@ -35,13 +36,13 @@ public:
     void Tick();
 
 private:
-    void RenderBucket(u32 x, u32 y);
+    void RenderBucket(u32 x, u32 y) const;
 
-    Layer* GetTargetLayer() { return m_image->GetLayer(m_targetLayer); };
+    Layer* GetTargetLayer() const { return m_image->GetLayer(m_targetLayer); }
 
     Ray GetRay(u32 x, u32 y) const;
     Color4 GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const;
-    void CalculatePixelColor(u32 x, u32 y);
+    void CalculatePixelColor(u32 x, u32 y) const;
     Vector3 SampleSquare() const;
 
     u32 m_samplesPerPixel = {10};
@@ -66,5 +67,4 @@ private:
     UniquePtr<Tasker> m_tasker;
     UniquePtr<ThreadPool> m_pool;
 };
-
 }

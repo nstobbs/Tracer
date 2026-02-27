@@ -48,8 +48,6 @@ public:
 
     u32 GetWidth() const { return m_width; };
     u32 GetHeight() const { return m_height; };
-
-
 protected:
     u32 m_width;
     u32 m_height;

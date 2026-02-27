@@ -1,20 +1,24 @@
 #pragma once
 #include "Tracer/Types.hpp"
-
-/*
-@name Tracer::BBox
-
-@brief Defines the volumetric shape an objects takes up using an minimal size bounding box.
-*/
+#include "Tracer/Ray.hpp"
 
 namespace Tracer {
 
 class BBox {
 public:
-    BBox();
+    BBox() = default;
+    BBox(const Point3& min, const Point3& max) : m_min(min), m_max(max) { };
     ~BBox() = default;
+
+    void Expand(Point3 point);
+
+    bool isHit(const Ray& ray) const;
+
+    Point3 Max() const { return m_max; };
+    Point3 Min() const { return m_min; };
+
 private:
-    Point3 m_bottomLeft;
-    Point3 m_topRight;
+    Point3 m_min = {0.0f, 0.0f, 0.0f};
+    Point3 m_max = {0.0f, 0.0f, 0.0f};
 };
 }

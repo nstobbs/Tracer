@@ -2,6 +2,8 @@
 
 #include "Tracer/Object.hpp"
 #include "Tracer/Vertex.hpp"
+//#include "Tracer/BVH.hpp"
+
 #include <vector>
 #include <string>
 
@@ -9,7 +11,7 @@ namespace Tracer {
 
 class Mesh : public Object {
 public:
-    Mesh() = default;
+    Mesh();
     Mesh(u64 vertexCount, void* verticesPtr);
     ~Mesh() = default;
 
@@ -17,11 +19,15 @@ public:
     static Mesh TriangleMesh(); /* Create an Single Triangle */
 
     bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) override;
+    const std::vector<Vertex>& GetVertices() const;
+    const std::vector<u64>& GetIndices() const;
 
 private:
     VertexInfo m_info;
     std::vector<Vertex> m_vertices;
     std::vector<u64> m_indices;
+
+    //BVH::MeshContainer m_container;
 };
 
 }
