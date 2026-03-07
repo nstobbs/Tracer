@@ -7,7 +7,6 @@
 namespace Tracer {
 
 namespace {
-    const f64 kPi = 3.1415926535897932385;
     constexpr bool kSingleThreaded = false;
 }
 
@@ -72,25 +71,6 @@ void Engine::RenderBucket(u32 x, u32 y) const {
     }
 }
 
-Ray Engine::GetRay(u32 x, u32 y) const {
-    /* Tracer::Image - 0, 0 is the Top Left Pixel. 
-    Viewport -1.0f, 1.0f is the Top Left Pixel */
-
-    f32 width = m_image->GetWidth();
-    f32 height =  m_image->GetHeight();
-
-    f32 aspectRatio = width / height;
-    f32 focalLength = m_camera->GetFocalLength();
-
-    f32 ndcX = (-1.0f + ((static_cast<f32>(x) + 0.5f) * 2.0f / width));
-    f32 ndcY = (1.0f - ((static_cast<f32>(y) + 0.5f) * 2.0f / height));
-
-    Point3 origin = Point3(0.0f, 0.0f, -2.0f);
-    Vector3 direction = glm::normalize(Vector3((ndcX * aspectRatio), ndcY, focalLength));
-    Ray ray(origin, direction);
-    return ray;
-};
-
 Color4 Engine::GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const {
     return Color4(0.0f);
 }
@@ -102,8 +82,9 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
     }
 
     /* !RayTracing! */
-    Ray ray = m_camera->TransformRay(GetRay(x, y));
+    //Ray ray = m_camera->TransformRay(GetRay(x, y));
     //Ray ray = GetRay(x, y);
+    Ray ray = m_camera->GetRay(*m_image, x, y);
 
     /* Missed Colour */
     auto color = m_missedColor;

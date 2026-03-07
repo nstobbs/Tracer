@@ -53,11 +53,44 @@ Color4 SurfaceShader::PreviewNormals::CalculateColor(const HitInfo& info) {
 };
 
 Color4 SurfaceShader::SolidColor::CalculateColor(const HitInfo& info) {
-    if (!info.isFrontFace) {
-        return m_backfaceColor;
-    };
+    //if (!info.isFrontFace) {
+    //    return m_backfaceColor;
+    //};
 
     return m_color;
+};
+
+Color4 SurfaceShader::Wireframe::CalculateColor(const HitInfo& info) {
+    Color4 output(0.0f, 0.0f, 0.0f, 0.0f);
+    if (info.type == ShapeType::eTriangle) {
+        f64 u, v, w;
+
+        u = info.extra.pTriangle->u;
+        v = info.extra.pTriangle->v;
+        w = info.extra.pTriangle->w;
+
+        if (u < m_lineThickness ||
+            v < m_lineThickness ||
+            w < m_lineThickness) {
+                output = m_color;
+            };
+    };
+    return output;
+};
+
+Color4 SurfaceShader::MergeSurfaceShader::CalculateColor(const HitInfo& info) {
+    Color4 output(0.0f, 0.0f, 0.0f, 0.0f);
+    if (m_surfaceA && m_surfaceB) {
+        switch (m_operation) {
+            case MergeOperation::Plus:
+                output = m_surfaceA->CalculateColor(info) + m_surfaceB->CalculateColor(info);
+                break;
+
+            case MergeOperation::Over:
+                break;
+        }
+    }
+    return output;
 };
 
 }

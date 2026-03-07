@@ -34,4 +34,6 @@ using WeakPtr = std::weak_ptr<T>;
 template<typename T>
 using UniquePtr = std::unique_ptr<T>;
 
+const f64 kPi = 3.1415926535897932385;
+
 }

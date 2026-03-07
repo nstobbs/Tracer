@@ -1,5 +1,6 @@
 #pragma once
 #include "Tracer/Ray.hpp"
+#include "Tracer/Image.hpp"
 
 namespace Tracer {
 
@@ -10,7 +11,11 @@ enum class CameraDirection {
     eLeft = 2,
     eRight = 4,
     eUp = 5,
-    eDown = 6 
+    eDown = 6,
+    ePanLeft = 7,
+    ePanRight = 8,
+    eTiltUp = 9,
+    eTiltDown = 10
 };
 
 class Ray;
@@ -21,15 +26,20 @@ public:
     ~Camera() = default;
 
     f32 GetFocalLength() const {return m_focalLength;}; 
-    Vector3 GetUp() const {return m_Up;};
-    Matrix4 GetViewMatrix() const;
-    void MoveCamera(f32 delta, CameraDirection direction);
+    void Transform(f32 delta, CameraDirection direction);
     u64 GetCameraVersion() const { return m_version; };
-    Ray TransformRay(const Ray& cameraRay) const;
+
+    Vector3 UpVector() const {return m_Up;};
+    Vector3 RightVector(Vector3 direction) const;
+    Vector3 ForwardVector() const;
+    Vector3 Rotate(Vector3 direction) const;
+
+    Ray GetRay(const Image& image, u32 x, u32 y) const;
 
 private:
     Point3 m_position = {0.0f, 0.0f, -2.0f};
-    Vector3 m_lookAt = {0.0f, 0.0f, 0.0f};
+    f32 m_pan = {0.0f};
+    f32 m_tilt = {0.0f};
 
     Vector3 m_Up = {0.0f, 1.0f, 0.0f};
     f32 m_focalLength = {0.5f};

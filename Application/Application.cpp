@@ -8,6 +8,9 @@ namespace {
     const int kHeight = 480;
     const bool kHalfRes = false;
 
+    const Tracer::f32 kCameraSensitivity = 0.5f; /* Pan and Tilt Speed */
+    const Tracer::f32 kCameraSpeed = 1.0f; /* Moving Position Speed */
+
     constexpr int kWindowWidth = kHalfRes ? kWidth / 2 : kWidth;
     constexpr int kWindowHeight = kHalfRes ? kHeight / 2 : kHeight;
     const std::string kWindowTitle = "Tracer MainWindow";
@@ -39,9 +42,14 @@ Application::Application() {
 
 #if 1
 
-    //auto surface = SurfaceShader::SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
-    auto surface = SurfaceShader::PreviewNormals();
-    auto meshes = Mesh::ReadFile("./Models/bunny.obj");
+    auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
+    auto solidSurface = SurfaceShader::SolidColor(Color4(0.5f, 0.5f, 0.5f, 0.5f));
+    auto normalSurface = SurfaceShader::PreviewNormals();
+    auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
+                                                          static_cast<Surface*>(&normalSurface),
+                                                          SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
+
+    auto meshes = Mesh::ReadFile("./Models/cube.obj");
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Object*>(&mesh));
@@ -78,23 +86,46 @@ Application::Application() {
     SDL_Event event;
     while (!m_shutdown) {
         if (SDL_PollEvent(&event) != 0) {
+
+            /* Shutdown Application*/
             if (event.type == SDL_QUIT) {
                 m_engine->StopRendering();
                 m_shutdown = true;
+            
+            /* Keybindings */
             } else if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == SDLK_UP) {
-                    m_camera->MoveCamera(1.0f, CameraDirection::eForward);
+                /* Move Camera Positions Keybinds
+                W = Move Forward
+                A = Move Left
+                S = Move Right
+                D = Move Backward */
+                if (event.key.keysym.sym == SDLK_w) {
+                    m_camera->Transform(kCameraSpeed, CameraDirection::eForward);
+                } else if (event.key.keysym.sym == SDLK_s) {
+                    m_camera->Transform(kCameraSpeed, CameraDirection::eBackward);
+                } else if (event.key.keysym.sym == SDLK_a) {
+                    m_camera->Transform(kCameraSpeed, CameraDirection::eLeft);
+                } else if (event.key.keysym.sym == SDLK_d) {
+                    m_camera->Transform(kCameraSpeed, CameraDirection::eRight);
+                }
+                /* Rotate Camera Direction Keybinds
+                Up Arrow = Tilt Up
+                Left Arrow = Pan Left
+                Right Arrow = Pan Right
+                Down Arrow = Tilt Down */
+                else if (event.key.keysym.sym == SDLK_UP) {
+                    m_camera->Transform(kCameraSensitivity, CameraDirection::eTiltUp);
                 } else if (event.key.keysym.sym == SDLK_DOWN) {
-                    m_camera->MoveCamera(1.0f, CameraDirection::eBackward);
+                    m_camera->Transform(kCameraSensitivity, CameraDirection::eTiltDown);
                 } else if (event.key.keysym.sym == SDLK_LEFT) {
-                    m_camera->MoveCamera(1.0f, CameraDirection::eLeft);
+                    m_camera->Transform(kCameraSensitivity, CameraDirection::ePanLeft);
                 } else if (event.key.keysym.sym == SDLK_RIGHT) {
-                    m_camera->MoveCamera(1.0f, CameraDirection::eRight);
+                    m_camera->Transform(kCameraSensitivity, CameraDirection::ePanRight);
                 }
             }
         };
 
-        /* Rendering Stuff Here!*/
+        /* Render */
         m_engine->Tick();
         PresentLayerToWindow(m_image->GetLayer(renderLayer), m_window);
     }

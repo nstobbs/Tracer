@@ -87,17 +87,17 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
         }
 
         f32 w1 = (d11 * d20 - d01 * d21) / denominator;
-        if (w1 < kThreshold) {
+        if (w1 < 0.0f) {
             continue;
         };
 
         f32 w2 = (d00 * d21 - d01 * d20) / denominator;
-        if (w2 < kThreshold) {
+        if (w2 < 0.0f) {
             continue;
         };
 
         f32 w0 = 1.0f - w1 - w2;
-        if (w0 < kThreshold) {
+        if (w0 < 0.0f) {
             continue;
         };
 

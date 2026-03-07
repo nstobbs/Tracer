@@ -30,6 +30,8 @@ public:
     void SetTargetLayer(const std::string& layer);
     void SetMissedColor(Color4 color) { m_missedColor = color; };
 
+    Image* GetTargetImage() { return m_image; }
+
     void StartRendering();
     void StopRendering();
 
@@ -40,7 +42,6 @@ private:
 
     Layer* GetTargetLayer() const { return m_image->GetLayer(m_targetLayer); }
 
-    Ray GetRay(u32 x, u32 y) const;
     Color4 GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const;
     void CalculatePixelColor(u32 x, u32 y) const;
     Vector3 SampleSquare() const;
