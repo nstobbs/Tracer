@@ -14,7 +14,7 @@ namespace {
 namespace Tracer {
 
 Mesh::Mesh() {
-    //m_container = BVH::Container<Mesh, Vertex>(this);
+    m_container = BVH::MeshContainer(this);
 }
 
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) {
@@ -22,13 +22,20 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
     u64 indexCount = m_indices.size();
     assert(indexCount % 3 == 0);
 
-    u64 triangleCount = indexCount / 3;
+    /* Find All of the Triangles to Render from the BVH */
+    BVH::MeshNode node = m_container.FindNodeWithIndices(ray);
+    if (node.indices.empty()) {
+        return hitInfo.hasHit;
+    }
+
+    assert(node.indices.size() % 3 == 0);
+    u64 triangleCount = node.indices.size() / 3;
     for (u64 i = 0; i < triangleCount; i++) {
         /* Get Triangle Vertices */
         const u64 triangleIndex = 3 * i;
-        Vertex v0 = m_vertices.at(m_indices.at(triangleIndex));
-        Vertex v1 = m_vertices.at(m_indices.at(triangleIndex+1));
-        Vertex v2 = m_vertices.at(m_indices.at(triangleIndex+2));
+        Vertex v0 = m_vertices.at(node.indices.at(triangleIndex));
+        Vertex v1 = m_vertices.at(node.indices.at(triangleIndex+1));
+        Vertex v2 = m_vertices.at(node.indices.at(triangleIndex+2));
 
         #ifdef mDebugPrint
 
@@ -168,6 +175,7 @@ Mesh Mesh::TriangleMesh() {
     std::vector<u64> indices = {0, 1, 2};
     triangleMesh.m_indices = indices;
     
+    triangleMesh.m_container.BuildBVH(3); /* One Triangle */
     //triangleMesh.m_position = Point3(0.0f, 0.0f, 0.0f);
 
     return triangleMesh;
@@ -256,7 +264,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 meshObject.m_vertices.push_back(vertex);
                 meshObject.m_indices.push_back(index);
             }
-            //meshObject.m_container.BuildBVH();
+            meshObject.m_container.BuildBVH(3 * 3);
             outputScene.push_back(meshObject);
         }
     }

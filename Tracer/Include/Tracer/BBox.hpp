@@ -14,8 +14,13 @@ public:
 
     bool isHit(const Ray& ray) const;
 
-    Point3 Max() const { return m_max; };
-    Point3 Min() const { return m_min; };
+    Point3 Max() const { return m_max; }
+    Point3 Min() const { return m_min; }
+
+    void SetMax(Point3 max) { m_max = max; }
+    void SetMin(Point3 min) { m_min = min; }
+
+    bool Contains(Point3 point) const;
 
 private:
     Point3 m_min = {0.0f, 0.0f, 0.0f};

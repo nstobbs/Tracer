@@ -72,7 +72,7 @@ Ray Camera::GetRay(const Image& image, u32 x, u32 y) const {
     f32 ndcX = (-1.0f + ((static_cast<f32>(x) + 0.5f) * 2.0f / width));
     f32 ndcY = (1.0f - ((static_cast<f32>(y) + 0.5f) * 2.0f / height));
 
-    Vector3 forward = Rotate(Vector3(0.0, 0.0f, m_focalLength));
+    Vector3 forward = ForwardVector();
     Vector3 right = RightVector(forward);
     Vector3 up = glm::normalize(glm::cross(forward, right));
 

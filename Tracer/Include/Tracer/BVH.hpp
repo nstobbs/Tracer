@@ -1,56 +1,41 @@
 #pragma once
 #include "Tracer/BBox.hpp"
 #include "Tracer/Ray.hpp"
-#include "Tracer/Mesh.hpp"
 #include "Tracer/Scene.hpp"
 
 #include <vector>
 
-/* Bounding Volume Hierarchy
-These templated Container and Node uses two args:
-    Object,
-    SubObjects.
-
-    The Object Represents an Root Object Containing all of the SubObjects
-    of that Object. Like How a Mesh is the Object and the vertices would be the
-    SubObject of the Mesh.
-    A Container then can be used to determine intersection of different SubObjects within a
-    Given Object using Tracer::Ray.
-    Like: A Tracer::Scene with different Tracer::Objects;
-    Like: A Tracer::Mesh with Tracer::Vertex;
-    Like: A Tracer::Volume with Tracer::Vortex: *TBD
- */
-
 namespace Tracer {
+    class Mesh;
+
     namespace BVH {
 
-template<typename SubObject>
-struct Node {
+struct MeshNode {
     BBox bbox;
-    Node* next = {nullptr};
-    std::vector<SubObject> subObject;
+    i32 leftIndex = {-1};
+    i32 rightIndex = {-2};
+    std::vector<u64> indices;
 };
 
-template<typename Object, typename SubObject>
-class Container {
+class MeshContainer {
 public:
-    Container(Object* object) : m_rootObject(object) { };
-    ~Container() = default;
+    MeshContainer() = default;
+    MeshContainer(Mesh* mesh) : m_pMesh(mesh) { };
+    ~MeshContainer() = default;
 
-    void BuildBVH(u32 subObjectsPerNode) = delete;
-    Node<SubObject>* FindNodeWithSubObjects(const Ray& ray) const;
+    void BuildBVH(u32 indicesPerNode);
+    MeshNode FindNodeWithIndices(const Ray& ray) const;
+    void SetMesh(Mesh* mesh) { m_pMesh = mesh; }
 
     u64 GetVersion() const { return m_version; }
 
 private:
-    Object* m_rootObject = {nullptr};
-    Node<SubObject>* m_rootNode = {nullptr};
+    Mesh* m_pMesh = {nullptr};
+    i32 m_rootNodeIndex = {-1}; // FIXME: Don't really need this...
     u64 m_version = {0};
 
-    std::vector<Node<SubObject>> m_nodes;
+    std::vector<MeshNode> m_nodes;
 };
-
-using MeshContainer = Container<Mesh, u64>;
 
 };
 };

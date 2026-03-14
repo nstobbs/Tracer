@@ -2,7 +2,7 @@
 
 #include "Tracer/Object.hpp"
 #include "Tracer/Vertex.hpp"
-//#include "Tracer/BVH.hpp"
+#include "Tracer/BVH.hpp"
 
 #include <vector>
 #include <string>
@@ -19,15 +19,15 @@ public:
     static Mesh TriangleMesh(); /* Create an Single Triangle */
 
     bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) override;
-    const std::vector<Vertex>& GetVertices() const;
-    const std::vector<u64>& GetIndices() const;
+    const std::vector<Vertex>& GetVertices() const { return m_vertices; }
+    const std::vector<u64>& GetIndices() const { return m_indices; }
 
 private:
     VertexInfo m_info;
     std::vector<Vertex> m_vertices;
     std::vector<u64> m_indices;
 
-    //BVH::MeshContainer m_container;
+    BVH::MeshContainer m_container;
 };
 
 }

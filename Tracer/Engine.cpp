@@ -82,8 +82,6 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
     }
 
     /* !RayTracing! */
-    //Ray ray = m_camera->TransformRay(GetRay(x, y));
-    //Ray ray = GetRay(x, y);
     Ray ray = m_camera->GetRay(*m_image, x, y);
 
     /* Missed Colour */
@@ -92,6 +90,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
     /* Check for any hits */
     auto scene = m_scene->GetObjects();
     HitInfo info{};
+
     for (auto& object : scene) {
         if (object->isHit(ray, info, Interval(), *m_camera)) {
             color = object->GetSurface()->CalculateColor(info);

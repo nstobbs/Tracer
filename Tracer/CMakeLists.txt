@@ -8,7 +8,7 @@ add_library(Tracer STATIC
     Surface.cpp
     Camera.cpp
     Vertex.cpp
-    #BVH.cpp
+    BVH.cpp
     BBox.cpp
 )
 

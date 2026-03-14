@@ -4,9 +4,9 @@
 #include <iostream>
 
 namespace {
-    const int kWidth = 640;
-    const int kHeight = 480;
-    const bool kHalfRes = false;
+    const int kWidth = 1280;
+    const int kHeight = 720;
+    const bool kHalfRes = true;
 
     const Tracer::f32 kCameraSensitivity = 0.5f; /* Pan and Tilt Speed */
     const Tracer::f32 kCameraSpeed = 1.0f; /* Moving Position Speed */
@@ -43,10 +43,10 @@ Application::Application() {
 #if 1
 
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
-    auto solidSurface = SurfaceShader::SolidColor(Color4(0.5f, 0.5f, 0.5f, 0.5f));
-    auto normalSurface = SurfaceShader::PreviewNormals();
+    auto solidSurface = SurfaceShader::SolidColor(Color4(1.0f, 0.25f, 0.25f, 1.0f));
+    //auto normalSurface = SurfaceShader::PreviewNormals();
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
-                                                          static_cast<Surface*>(&normalSurface),
+                                                          static_cast<Surface*>(&solidSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
 
     auto meshes = Mesh::ReadFile("./Models/cube.obj");
@@ -94,7 +94,7 @@ Application::Application() {
             
             /* Keybindings */
             } else if (event.type == SDL_KEYDOWN) {
-                /* Move Camera Positions Keybinds
+                /* Move Camera Position Keybinds
                 W = Move Forward
                 A = Move Left
                 S = Move Right
