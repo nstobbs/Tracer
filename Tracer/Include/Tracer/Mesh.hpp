@@ -2,7 +2,7 @@
 
 #include "Tracer/Object.hpp"
 #include "Tracer/Vertex.hpp"
-#include "Tracer/BVH.hpp"
+#include "Tracer/BoundingVolumeHierarchy.hpp"
 
 #include <vector>
 #include <string>

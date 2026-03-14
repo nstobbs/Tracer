@@ -23,111 +23,113 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
     assert(indexCount % 3 == 0);
 
     /* Find All of the Triangles to Render from the BVH */
-    BVH::MeshNode node = m_container.FindNodeWithIndices(ray);
-    if (node.indices.empty()) {
-        return hitInfo.hasHit;
-    }
-
-    assert(node.indices.size() % 3 == 0);
-    u64 triangleCount = node.indices.size() / 3;
-    for (u64 i = 0; i < triangleCount; i++) {
-        /* Get Triangle Vertices */
-        const u64 triangleIndex = 3 * i;
-        Vertex v0 = m_vertices.at(node.indices.at(triangleIndex));
-        Vertex v1 = m_vertices.at(node.indices.at(triangleIndex+1));
-        Vertex v2 = m_vertices.at(node.indices.at(triangleIndex+2));
-
-        #ifdef mDebugPrint
-
-        // Debug Printing
-        std::printf("#################### Triangle: %llu ####################\n", i);
-        std::printf("v0 Positions: %.6f, %.6f, %.6f | Normals: %.6f, %.6f, %.6f.\n", v0.position.x, 
-        v0.position.y, v0.position.z, v0.normals.x, v0.normals.y, v0.normals.z);
-        std::printf("v1 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v1.position.x, 
-        v1.position.y, v1.position.z, v1.normals.x, v1.normals.y, v1.normals.z);
-        std::printf("v2 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v2.position.x, 
-        v2.position.y, v2.position.z, v2.normals.x, v2.normals.y, v2.normals.z);
-        std::printf("\n");
-
-        #endif
-
-        /* Generate Geometric Normals */
-        Vector3 edge0 = v1.position - v0.position;
-        Vector3 edge1 = v2.position - v0.position;
-        Vector3 triNormal = glm::normalize(glm::cross(edge0, edge1));
-
-        /* Check if the Ray is Parallel */
-        if (std::fabs(glm::dot(triNormal, ray.direction)) <= kThreshold) {
-            continue;
-        }
-
-        /* Calculate the Distance of the Ray and the intersection of the triangles plane  */
-        f32 distance = glm::dot(triNormal, (v0.position - ray.origin)) /
-                                    glm::dot(triNormal, ray.direction);
-        if (distance < 0.0f && interval.Contains(distance)) {
-            continue;
-        }
-
-        /* Check if we already have a closer hit recorded */
-        if (hitInfo.hasHit && distance >= hitInfo.distance) {
-            continue;
-        }
-
-        /* Calculate Hit Position on Triangle Plane */
-        Point3 hitPosition = ray.origin + ray.direction * static_cast<f32>(distance);
- 
-        /* Calculate the barycentric coordinates for that given point.*/
-        Vector3 e0 = v1.position - v0.position;
-        Vector3 e1 = v2.position - v0.position;
-        Vector3 e2 = hitPosition - v0.position;
-
-        f32 d00 = glm::dot(e0, e0);
-        f32 d01 = glm::dot(e0, e1);
-        f32 d11 = glm::dot(e1, e1);
-        f32 d20 = glm::dot(e2, e0);
-        f32 d21 = glm::dot(e2, e1);
-
-        /* Check for Degenerate Triangles */
-        f32 denominator = d00 * d11 - d01 * d01;
-        if (std::fabs(denominator) <= kThreshold) {
-            continue;
-        }
-
-        f32 w1 = (d11 * d20 - d01 * d21) / denominator;
-        if (w1 < 0.0f) {
-            continue;
+    auto nodes = m_container.FindAllHitNodes(ray);
+    for (auto node : nodes) {
+        if (node.indices.empty()) {
+            return hitInfo.hasHit;
         };
 
-        f32 w2 = (d00 * d21 - d01 * d20) / denominator;
-        if (w2 < 0.0f) {
-            continue;
-        };
+        assert(node.indices.size() % 3 == 0);
+        u64 triangleCount = node.indices.size() / 3;
+        for (u64 i = 0; i < triangleCount; i++) {
+            /* Get Triangle Vertices */
+            const u64 triangleIndex = 3 * i;
+            Vertex v0 = m_vertices.at(node.indices.at(triangleIndex));
+            Vertex v1 = m_vertices.at(node.indices.at(triangleIndex+1));
+            Vertex v2 = m_vertices.at(node.indices.at(triangleIndex+2));
 
-        f32 w0 = 1.0f - w1 - w2;
-        if (w0 < 0.0f) {
-            continue;
-        };
+            #ifdef mDebugPrint
 
-        /* Record Hit Infomation */
-        hitInfo.hasHit = true;
-        hitInfo.position = hitPosition;
-        hitInfo.distance = distance;
-        hitInfo.normal = triNormal;
-        hitInfo.isFrontFace = (glm::dot(hitInfo.normal, ray.direction) < 0.0f);
+            // Debug Printing
+            std::printf("#################### Triangle: %llu ####################\n", i);
+            std::printf("v0 Positions: %.6f, %.6f, %.6f | Normals: %.6f, %.6f, %.6f.\n", v0.position.x, 
+            v0.position.y, v0.position.z, v0.normals.x, v0.normals.y, v0.normals.z);
+            std::printf("v1 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v1.position.x, 
+            v1.position.y, v1.position.z, v1.normals.x, v1.normals.y, v1.normals.z);
+            std::printf("v2 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v2.position.x, 
+            v2.position.y, v2.position.z, v2.normals.x, v2.normals.y, v2.normals.z);
+            std::printf("\n");
 
-        /* Append Extra Shape Info to HitInfo */
-        Triangle* thisTriangle = new Triangle();
-        ShapeGen extra;
-        extra.pTriangle = thisTriangle;
-        hitInfo.type = ShapeType::eTriangle;
-        hitInfo.extra = extra;
+            #endif
 
-        thisTriangle->u = w0;
-        thisTriangle->v = w1;
-        thisTriangle->w = w2;
-        thisTriangle->v0 = v0;
-        thisTriangle->v1 = v1;
-        thisTriangle->v2 = v2;
+            /* Generate Geometric Normals */
+            Vector3 edge0 = v1.position - v0.position;
+            Vector3 edge1 = v2.position - v0.position;
+            Vector3 triNormal = glm::normalize(glm::cross(edge0, edge1));
+
+            /* Check if the Ray is Parallel */
+            if (std::fabs(glm::dot(triNormal, ray.direction)) <= kThreshold) {
+                continue;
+            }
+
+            /* Calculate the Distance of the Ray and the intersection of the triangles plane  */
+            f32 distance = glm::dot(triNormal, (v0.position - ray.origin)) /
+                                        glm::dot(triNormal, ray.direction);
+            if (distance < 0.0f && interval.Contains(distance)) {
+                continue;
+            }
+
+            /* Check if we already have a closer hit recorded */
+            if (hitInfo.hasHit && distance >= hitInfo.distance) {
+                continue;
+            }
+
+            /* Calculate Hit Position on Triangle Plane */
+            Point3 hitPosition = ray.origin + ray.direction * static_cast<f32>(distance);
+    
+            /* Calculate the barycentric coordinates for that given point.*/
+            Vector3 e0 = v1.position - v0.position;
+            Vector3 e1 = v2.position - v0.position;
+            Vector3 e2 = hitPosition - v0.position;
+
+            f32 d00 = glm::dot(e0, e0);
+            f32 d01 = glm::dot(e0, e1);
+            f32 d11 = glm::dot(e1, e1);
+            f32 d20 = glm::dot(e2, e0);
+            f32 d21 = glm::dot(e2, e1);
+
+            /* Check for Degenerate Triangles */
+            f32 denominator = d00 * d11 - d01 * d01;
+            if (std::fabs(denominator) <= kThreshold) {
+                continue;
+            }
+
+            f32 w1 = (d11 * d20 - d01 * d21) / denominator;
+            if (w1 < 0.0f) {
+                continue;
+            };
+
+            f32 w2 = (d00 * d21 - d01 * d20) / denominator;
+            if (w2 < 0.0f) {
+                continue;
+            };
+
+            f32 w0 = 1.0f - w1 - w2;
+            if (w0 < 0.0f) {
+                continue;
+            };
+
+            /* Record Hit Infomation */
+            hitInfo.hasHit = true;
+            hitInfo.position = hitPosition;
+            hitInfo.distance = distance;
+            hitInfo.normal = triNormal;
+            hitInfo.isFrontFace = (glm::dot(hitInfo.normal, ray.direction) < 0.0f);
+
+            /* Append Extra Shape Info to HitInfo */
+            Triangle* thisTriangle = new Triangle();
+            ShapeGen extra;
+            extra.pTriangle = thisTriangle;
+            hitInfo.type = ShapeType::eTriangle;
+            hitInfo.extra = extra;
+
+            thisTriangle->u = w0;
+            thisTriangle->v = w1;
+            thisTriangle->w = w2;
+            thisTriangle->v0 = v0;
+            thisTriangle->v1 = v1;
+            thisTriangle->v2 = v2;
+        }
     }
     return hitInfo.hasHit;
 };
@@ -175,7 +177,8 @@ Mesh Mesh::TriangleMesh() {
     std::vector<u64> indices = {0, 1, 2};
     triangleMesh.m_indices = indices;
     
-    triangleMesh.m_container.BuildBVH(3); /* One Triangle */
+    triangleMesh.m_container.SetTrianglesPerNode(1);
+    triangleMesh.m_container.BuildBVH(); /* One Triangle */
     //triangleMesh.m_position = Point3(0.0f, 0.0f, 0.0f);
 
     return triangleMesh;
@@ -264,7 +267,8 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 meshObject.m_vertices.push_back(vertex);
                 meshObject.m_indices.push_back(index);
             }
-            meshObject.m_container.BuildBVH(3 * 3);
+            meshObject.m_container.SetTrianglesPerNode(3);
+            meshObject.m_container.BuildBVH();
             outputScene.push_back(meshObject);
         }
     }

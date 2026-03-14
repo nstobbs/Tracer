@@ -1,9 +1,10 @@
 #pragma once
-#include "Tracer/BBox.hpp"
+#include "Tracer/BoundingBox.hpp"
 #include "Tracer/Ray.hpp"
 #include "Tracer/Scene.hpp"
 
 #include <vector>
+#include <utility>
 
 namespace Tracer {
     class Mesh;
@@ -13,7 +14,7 @@ namespace Tracer {
 struct MeshNode {
     BBox bbox;
     i32 leftIndex = {-1};
-    i32 rightIndex = {-2};
+    i32 rightIndex = {-1};
     std::vector<u64> indices;
 };
 
@@ -23,18 +24,23 @@ public:
     MeshContainer(Mesh* mesh) : m_pMesh(mesh) { };
     ~MeshContainer() = default;
 
-    void BuildBVH(u32 indicesPerNode);
-    MeshNode FindNodeWithIndices(const Ray& ray) const;
+    void SetTrianglesPerNode(u32 triangleCount);
+    void BuildBVH();
+    std::vector<MeshNode> FindAllHitNodes(const Ray& ray) const;
     void SetMesh(Mesh* mesh) { m_pMesh = mesh; }
 
     u64 GetVersion() const { return m_version; }
 
 private:
-    Mesh* m_pMesh = {nullptr};
-    i32 m_rootNodeIndex = {-1}; // FIXME: Don't really need this...
-    u64 m_version = {0};
+    std::pair<BBox, BBox> splitBBox(BBox& bbox);
+    std::pair<MeshNode, MeshNode> splitNode(MeshNode& node);
+    void transferIndicesToChildNodes(BBox anchorPoint, MeshNode& from, MeshNode& toA, MeshNode& toB);
+    
 
+    Mesh* m_pMesh = {nullptr};
+    u64 m_version = {0};
     std::vector<MeshNode> m_nodes;
+    u32 m_trianglesPerNode = {3};
 };
 
 };

@@ -8,8 +8,8 @@ add_library(Tracer STATIC
     Surface.cpp
     Camera.cpp
     Vertex.cpp
-    BVH.cpp
-    BBox.cpp
+    BoundingVolumeHierarchy.cpp
+    BoundingBox.cpp
 )
 
 target_include_directories(Tracer PUBLIC 

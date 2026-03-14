@@ -1,5 +1,5 @@
 #pragma once
-#include "Tracer/BBox.hpp"
+#include "Tracer/BoundingBox.hpp"
 #include "Tracer/Surface.hpp"
 #include "Tracer/Ray.hpp"
 #include "Tracer/Interval.hpp"
