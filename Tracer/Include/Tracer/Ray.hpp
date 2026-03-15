@@ -24,7 +24,7 @@ public:
 };
 
 union ShapeGen {
-    Triangle* pTriangle;
+    Triangle triangle;
 };
 
 struct HitInfo {

@@ -81,21 +81,32 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         return;
     }
 
-    /* !RayTracing! */
-    Ray ray = m_camera->GetRay(*m_image, x, y);
-
-    /* Missed Colour */
+    /* Prep Scene, Viewport */
     auto color = m_missedColor;
+    // FIXME: Pre adjusting before sample div later.
+    color.x *= m_samplesPerPixel;
+    color.y *= m_samplesPerPixel;
+    color.z *= m_samplesPerPixel;
 
-    /* Check for any hits */
     auto scene = m_scene->GetObjects();
-    HitInfo info{};
 
-    for (auto& object : scene) {
-        if (object->isHit(ray, info, Interval(), *m_camera)) {
-            color = object->GetSurface()->CalculateColor(info);
-        };
+    /* Render Per Samples */
+    for (i32 sample = 0; sample < m_samplesPerPixel; sample++) {
+        /* Ray Tracing Starts */
+        Ray ray = m_camera->GetRay(*m_image, x, y);
+        HitInfo info{};
+
+        for (auto& object : scene) {
+            if (object->isHit(ray, info, Interval(), *m_camera)) {
+                color += object->GetSurface()->CalculateColor(info);
+            };
+        }
     }
+
+    color.r = color.r / m_samplesPerPixel;
+    color.g = color.g / m_samplesPerPixel;
+    color.b = color.b / m_samplesPerPixel;
+    color.a = color.a / m_samplesPerPixel;
 
     /* Write to ImageLayer*/
     if (m_targetLayer != "eInvalid") {

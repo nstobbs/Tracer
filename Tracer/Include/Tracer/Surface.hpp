@@ -1,6 +1,7 @@
 #pragma once
 #include "Tracer/Types.hpp"
 #include "Tracer/Ray.hpp"
+#include "Tracer/Image.hpp"
 
 namespace Tracer {
 
@@ -62,6 +63,16 @@ private:
     Surface* m_surfaceA = {nullptr};
     Surface* m_surfaceB = {nullptr};
     MergeOperation m_operation;
+};
+
+/* Display Image */
+class UVTexture : public Surface {
+public:
+    UVTexture(Image* image, const std::string& layer) : m_image(image), m_layerName(layer) {}
+    Color4 CalculateColor(const HitInfo& info) override;
+private:
+    Image* m_image = {nullptr};
+    const std::string m_layerName;
 };
 }
 }

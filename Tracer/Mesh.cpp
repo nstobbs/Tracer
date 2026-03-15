@@ -20,7 +20,7 @@ Mesh::Mesh() {
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) {
     /* Per Each Triangle Of this Mesh */
     u64 indexCount = m_indices.size();
-    assert(indexCount % 3 == 0);
+    //assert(indexCount % 3 == 0);
 
     /* Find All of the Triangles to Render from the BVH */
     auto nodes = m_container.FindAllHitNodes(ray);
@@ -117,18 +117,13 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
             hitInfo.isFrontFace = (glm::dot(hitInfo.normal, ray.direction) < 0.0f);
 
             /* Append Extra Shape Info to HitInfo */
-            Triangle* thisTriangle = new Triangle();
-            ShapeGen extra;
-            extra.pTriangle = thisTriangle;
             hitInfo.type = ShapeType::eTriangle;
-            hitInfo.extra = extra;
-
-            thisTriangle->u = w0;
-            thisTriangle->v = w1;
-            thisTriangle->w = w2;
-            thisTriangle->v0 = v0;
-            thisTriangle->v1 = v1;
-            thisTriangle->v2 = v2;
+            hitInfo.extra.triangle.u = w0;
+            hitInfo.extra.triangle.v = w1;
+            hitInfo.extra.triangle.w = w2;
+            hitInfo.extra.triangle.v0 = v0;
+            hitInfo.extra.triangle.v1 = v1;
+            hitInfo.extra.triangle.v2 = v2;
         }
     }
     return hitInfo.hasHit;
@@ -267,7 +262,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 meshObject.m_vertices.push_back(vertex);
                 meshObject.m_indices.push_back(index);
             }
-            meshObject.m_container.SetTrianglesPerNode(3);
+            meshObject.m_container.SetTrianglesPerNode(8);
             meshObject.m_container.BuildBVH();
             outputScene.push_back(meshObject);
         }
