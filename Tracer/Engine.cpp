@@ -3,6 +3,8 @@
 #include <chrono>
 
 #include <glm/geometric.hpp>
+#include <random>
+#include <utility>
 
 namespace Tracer {
 
@@ -64,11 +66,19 @@ void Engine::Tick() {
 }
 
 void Engine::RenderBucket(u32 x, u32 y) const {
+    std::vector<std::pair<u32, u32>> pixelCoords;
     for (u32 bY = 0; bY < m_bucketSize; bY++) {
         for (u32 bX = 0; bX < m_bucketSize; bX++) {
-            CalculatePixelColor(x+bX, y+bY);
+            pixelCoords.emplace_back(x + bX, y + bY);
         }
     }
+
+    std::mt19937 rng(std::random_device{}());
+    std::shuffle(pixelCoords.begin(), pixelCoords.end(), rng);
+
+    for (auto& [x, y] : pixelCoords) {
+        CalculatePixelColor(x, y);
+    }  
 }
 
 Color4 Engine::GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const {

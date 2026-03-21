@@ -22,4 +22,5 @@ find_package(assimp)
 target_link_libraries(Tracer
     glm::glm
     assimp::assimp
+    stb
 )

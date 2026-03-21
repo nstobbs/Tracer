@@ -1,5 +1,7 @@
 #include "Tracer/Surface.hpp"
 
+#include <algorithm>
+
 namespace Tracer {
 
 Color4 SurfaceShader::VertexColor::CalculateColor(const HitInfo& info) {
@@ -9,20 +11,15 @@ Color4 SurfaceShader::VertexColor::CalculateColor(const HitInfo& info) {
 
     Color4 output(0.0f, 0.0f, 0.0f, 0.0f);
     if (info.type == ShapeType::eTriangle) {
-        Vertex v0, v1, v2;
-        f64 u, v, w;
-        v0 = info.extra.triangle.v0;
-        v1 = info.extra.triangle.v1;
-        v2 = info.extra.triangle.v2;
+        output = info.extra.triangle.v0.color * static_cast<f32>(info.extra.triangle.u);
+        output += info.extra.triangle.v1.color * static_cast<f32>(info.extra.triangle.v);
+        output += info.extra.triangle.v2.color * static_cast<f32>(info.extra.triangle.w);
 
-        u = info.extra.triangle.u;
-        v = info.extra.triangle.v;
-        w = info.extra.triangle.w;
-
-        output = v0.color * static_cast<f32>(u);
-        output += v1.color * static_cast<f32>(v);
-        output += v2.color * static_cast<f32>(w);
-        output.w = 1.0f;
+        /* Clamp */
+        output.r = std::clamp(output.r, 0.0f, 1.0f);
+        output.g = std::clamp(output.g, 0.0f, 1.0f);
+        output.b = std::clamp(output.b, 0.0f, 1.0f);
+        output.a = std::clamp(output.a, 0.0f, 1.0f);
     };
     return output;
 };
@@ -34,28 +31,18 @@ Color4 SurfaceShader::PreviewNormals::CalculateColor(const HitInfo& info) {
 
     Color4 output(0.0f, 0.0f, 0.0f, 1.0f);
     if (info.type == ShapeType::eTriangle) {
-        Vertex v0, v1, v2;
-        f64 u, v, w;
-        v0 = info.extra.triangle.v0;
-        v1 = info.extra.triangle.v1;
-        v2 = info.extra.triangle.v2;
-
-        u = info.extra.triangle.u;
-        v = info.extra.triangle.v;
-        w = info.extra.triangle.w;
-
-        output = Color4(-v0.normals, 1.0f) * static_cast<f32>(u);
-        output += Color4(-v1.normals, 1.0f) * static_cast<f32>(v);
-        output += Color4(-v2.normals, 1.0f) * static_cast<f32>(w);
+        output = Color4(info.extra.triangle.v0.normals, 1.0f) * static_cast<f32>(info.extra.triangle.u);
+        output += Color4(info.extra.triangle.v1.normals, 1.0f) * static_cast<f32>(info.extra.triangle.v);
+        output += Color4(info.extra.triangle.v2.normals, 1.0f) * static_cast<f32>(info.extra.triangle.w);
         output.w = 1.0f;
     };
     return output;
 };
 
 Color4 SurfaceShader::SolidColor::CalculateColor(const HitInfo& info) {
-    //if (!info.isFrontFace) {
-    //    return m_backfaceColor;
-    //};
+    if (!info.isFrontFace) {
+        return m_backfaceColor;
+    };
 
     return m_color;
 };
@@ -119,7 +106,14 @@ Color4 SurfaceShader::UVTexture::CalculateColor(const HitInfo& info) {
         return Color4(1.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    output =+ m_image->GetLayer(m_layerName)->GetRow(requestY).at(requestX);
+    output = m_image->GetLayer(m_layerName)->GetRow(requestY).at(requestX);
+
+    /* Clamp */
+    output.r = std::clamp(output.r, 0.0f, 1.0f);
+    output.g = std::clamp(output.g, 0.0f, 1.0f);
+    output.b = std::clamp(output.b, 0.0f, 1.0f);
+    output.a = std::clamp(output.a, 0.0f, 1.0f);
+
     return output;
 }
 

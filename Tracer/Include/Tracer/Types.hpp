@@ -21,6 +21,7 @@ using Matrix4 = glm::mat4;
 
 using u32 = uint32_t;
 using u64 = uint64_t;
+using u8 = uint8_t;
 using i32 = int;
 using f32 = float;
 using f64 = double;

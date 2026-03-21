@@ -65,7 +65,7 @@ private:
     MergeOperation m_operation;
 };
 
-/* Display Image */
+/* Display Image Texture */
 class UVTexture : public Surface {
 public:
     UVTexture(Image* image, const std::string& layer) : m_image(image), m_layerName(layer) {}

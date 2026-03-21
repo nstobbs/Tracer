@@ -27,6 +27,7 @@ public:
     void SetTrianglesPerNode(u32 triangleCount);
     void BuildBVH();
     std::vector<MeshNode> FindAllHitNodes(const Ray& ray) const;
+    std::vector<MeshNode> AllNodes() const { return m_nodes; }
     void SetMesh(Mesh* mesh) { m_pMesh = mesh; }
 
     u64 GetVersion() const { return m_version; }

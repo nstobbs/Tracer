@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Tracer/Types.hpp"
 
 #include <string>
@@ -48,6 +49,8 @@ public:
 
     u32 GetWidth() const { return m_width; };
     u32 GetHeight() const { return m_height; };
+
+    static Image ReadImage(const std::string& filepath);
 protected:
     u32 m_width;
     u32 m_height;

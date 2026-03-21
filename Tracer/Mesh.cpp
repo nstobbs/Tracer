@@ -5,8 +5,6 @@
 #include <assimp/postprocess.h>
 #include <cmath>
 
-//#define mDebugPrint
-
 namespace {
     const Tracer::f64 kThreshold = 0.01;
 }
@@ -24,6 +22,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
     /* Find All of the Triangles to Render from the BVH */
     auto nodes = m_container.FindAllHitNodes(ray);
+    //auto nodes = m_container.AllNodes();
     for (auto node : nodes) {
         if (node.indices.empty()) {
             return hitInfo.hasHit;
@@ -37,20 +36,6 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
             Vertex v0 = m_vertices.at(node.indices.at(triangleIndex));
             Vertex v1 = m_vertices.at(node.indices.at(triangleIndex+1));
             Vertex v2 = m_vertices.at(node.indices.at(triangleIndex+2));
-
-            #ifdef mDebugPrint
-
-            // Debug Printing
-            std::printf("#################### Triangle: %llu ####################\n", i);
-            std::printf("v0 Positions: %.6f, %.6f, %.6f | Normals: %.6f, %.6f, %.6f.\n", v0.position.x, 
-            v0.position.y, v0.position.z, v0.normals.x, v0.normals.y, v0.normals.z);
-            std::printf("v1 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v1.position.x, 
-            v1.position.y, v1.position.z, v1.normals.x, v1.normals.y, v1.normals.z);
-            std::printf("v2 Positions: %f, %f, %f | Normals: %f, %f, %f.\n", v2.position.x, 
-            v2.position.y, v2.position.z, v2.normals.x, v2.normals.y, v2.normals.z);
-            std::printf("\n");
-
-            #endif
 
             /* Generate Geometric Normals */
             Vector3 edge0 = v1.position - v0.position;
@@ -182,8 +167,7 @@ Mesh Mesh::TriangleMesh() {
 std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
     std::vector<Mesh> outputScene;
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(filepath,
-                                    aiProcess_Triangulate);
+    const aiScene* scene = importer.ReadFile(filepath, aiProcess_Triangulate);
 
     if (!scene) {
         std::printf("Mesh.cpp: Failed to Read Model: %s\n", importer.GetErrorString());

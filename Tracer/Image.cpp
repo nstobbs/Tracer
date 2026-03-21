@@ -1,5 +1,8 @@
 #include "Tracer/Image.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 namespace Tracer {
 
 /* Tracer::Layer */
@@ -66,6 +69,36 @@ Layer* Image::GetLayer(const std::string& name) {
 
 std::vector<std::string> Image::GetLayerNames() {
     return m_layerNames;
+};
+
+Image Image::ReadImage(const std::string& filepath) {
+    i32 width, height, channelsCount;
+    auto pixels = stbi_load(filepath.c_str(), &width, &height, &channelsCount, STBI_rgb_alpha);
+    if (!pixels) {
+        std::printf("Failed to Read Image. Error: &s\n", stbi_failure_reason());
+    }
+
+    Image output(width, height);
+    output.CreateLayer("RGBA");
+    Layer* RGBA = output.GetLayer("RGBA");
+
+    for (i32 y = 0; y < height; y++) {
+        Row& row = RGBA->GetRow(y);
+        for (i32 x = 0; x < width; x++) {
+            unsigned char* pixelOffset = pixels + (x + (y * width)) * channelsCount;
+            u8 r = pixelOffset[0];
+            u8 g = pixelOffset[1];
+            u8 b = pixelOffset[2];
+            u8 a = pixelOffset[3];
+            Color4 color(static_cast<f32>(r) / 255.0f,
+                         static_cast<f32>(g) / 255.0f,
+                         static_cast<f32>(b) / 255.0f,
+                         static_cast<f32>(a) / 255.0f);
+            row.at(x) = color;
+        }
+    }
+    stbi_image_free(pixels);
+    return output;
 };
 
 }

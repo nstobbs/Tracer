@@ -86,10 +86,11 @@ Ray Camera::GetRay(const Image& image, u32 x, u32 y) {
 
     f32 sampleOffsetX = m_dist(m_rd);
     f32 sampleOffsetY = m_dist(m_rd);
-    direction.x += sampleOffsetX;
-    direction.y += sampleOffsetY;
+    Point3 origin = m_position;
+    origin.x += sampleOffsetX;
+    origin.y += sampleOffsetY;
 
-    return Ray(m_position, direction);
+    return Ray(origin, direction);
 };
 
 }

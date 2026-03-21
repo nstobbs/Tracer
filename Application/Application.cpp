@@ -42,19 +42,20 @@ Application::Application() {
 
 #if 1
 
+    Image testTexture = Image::ReadImage("./Textures/UV_Checker.png");
+
     Image inputTexture(1024, 1024);
-    inputTexture.CreateLayer("color");
-    inputTexture.GetLayer("color")->DrawTestPatten(TestPatten::eUVRamp);
-    auto textureSurface = SurfaceShader::UVTexture(&inputTexture, "color");
+    inputTexture.CreateLayer("RGBA");
+    inputTexture.GetLayer("RGBA")->DrawTestPatten(TestPatten::eUVRamp);
+    auto textureSurface = SurfaceShader::UVTexture(&inputTexture, "RGBA");
 
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     auto solidSurface = SurfaceShader::SolidColor(Color4(1.0f, 0.25f, 0.25f, 1.0f));
-    auto normalSurface = SurfaceShader::PreviewNormals();
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
-                                                          static_cast<Surface*>(&textureSurface),
+                                                          static_cast<Surface*>(&solidSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
 
-    auto meshes = Mesh::ReadFile("./Models/viking_room.obj");
+    auto meshes = Mesh::ReadFile("./Models/cube.obj");
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Object*>(&mesh));
@@ -71,7 +72,6 @@ Application::Application() {
 #endif
 
     m_scene->AddSurface(&surface);
-    
     m_engine->SetScene(m_scene.get());
     m_engine->SetCamera(m_camera.get());
     
@@ -84,7 +84,7 @@ Application::Application() {
 
     m_engine->SetImage(m_image.get());
     m_engine->SetTargetLayer(renderLayer);
-    m_engine->SetSamplesPerPixel(4);
+    m_engine->SetSamplesPerPixel(1);
     m_engine->StartRendering();
 
     /* Main Loop */

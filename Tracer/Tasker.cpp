@@ -59,8 +59,8 @@ std::queue<BucketTask> Tasker::createBucketsQueue() {
         for (u32 Y = 0; Y < bucketHeightSize; Y++) {
             for (u32 X = 0; X < bucketWidthSize; X++) {
                 BucketTask bucket{};
-                u32 topLeftX = X * m_engine->m_bucketSize;
-                u32 topLeftY = Y * m_engine->m_bucketSize;
+                u32 topLeftX = X * m_engine->m_bucketSize - (m_engine->m_bucketSize / 2);
+                u32 topLeftY = Y * m_engine->m_bucketSize - (m_engine->m_bucketSize / 2);
                 bucket.x = topLeftX;
                 bucket.y = topLeftY;
                 bucket.task = [this, topLeftX, topLeftY]{
