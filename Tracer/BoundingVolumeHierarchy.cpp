@@ -107,7 +107,7 @@ void MeshContainer::BuildBVH() {
 
     auto buildTree = [&](auto& self, MeshNode& node) {
         u32 nodeTriangleCount = node.indices.size() / 3;
-        if (nodeTriangleCount <= m_trianglesPerNode || m_nodes.size() >= kMaxNodes) {
+        if (nodeTriangleCount <= m_trianglesPerNode ){//|| m_nodes.size() >= kMaxNodes) {
             return;
         }
         auto result = splitNode(node);

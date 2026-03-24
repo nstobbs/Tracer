@@ -51,11 +51,12 @@ Application::Application() {
 
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     auto solidSurface = SurfaceShader::SolidColor(Color4(1.0f, 0.25f, 0.25f, 1.0f));
+    auto normalSurface = SurfaceShader::PreviewNormals();
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
-                                                          static_cast<Surface*>(&solidSurface),
+                                                          static_cast<Surface*>(&normalSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
 
-    auto meshes = Mesh::ReadFile("./Models/cube.obj");
+    auto meshes = Mesh::ReadFile("./Models/dragon.obj");
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Object*>(&mesh));

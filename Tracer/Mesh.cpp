@@ -75,7 +75,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
             /* Check for Degenerate Triangles */
             f32 denominator = d00 * d11 - d01 * d01;
-            if (std::fabs(denominator) <= kThreshold) {
+            if (std::fabs(denominator) <= 0.0f) {
                 continue;
             }
 
@@ -246,7 +246,9 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 meshObject.m_vertices.push_back(vertex);
                 meshObject.m_indices.push_back(index);
             }
-            meshObject.m_container.SetTrianglesPerNode(8);
+            // Calculate TrianglesPerNode Based of Index Count and Node Max Limit
+            auto targetSize = meshObject.m_indices.size() / 128; //FIXME: Get the Node Limit from the MeshContainer...
+            meshObject.m_container.SetTrianglesPerNode(3);
             meshObject.m_container.BuildBVH();
             outputScene.push_back(meshObject);
         }
