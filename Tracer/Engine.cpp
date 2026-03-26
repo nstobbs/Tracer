@@ -87,7 +87,7 @@ Color4 Engine::GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene*
 
 void Engine::CalculatePixelColor(u32 x, u32 y) const {
     /* Check Image Bounding Box */
-    if (x > m_image->GetWidth() || y > m_image->GetHeight()) {
+    if (x >= m_image->GetWidth() || y >= m_image->GetHeight()) {
         return;
     }
 
@@ -106,10 +106,18 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         Ray ray = m_camera->GetRay(*m_image, x, y);
         HitInfo info{};
 
+        Object* closeObj = nullptr;
+        f64 closeDistance = Interval().Max();
         for (auto& object : scene) {
             if (object->isHit(ray, info, Interval(), *m_camera)) {
-                color += object->GetSurface()->CalculateColor(info);
+                if (info.distance < closeDistance) {
+                    closeObj = object;
+                    closeDistance = info.distance;
+                }
             };
+        }
+        if (closeObj) {
+            color += closeObj->GetSurface()->CalculateColor(info);
         }
     }
 

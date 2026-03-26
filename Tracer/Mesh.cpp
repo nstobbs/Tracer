@@ -7,7 +7,7 @@
 #include <cmath>
 
 namespace {
-    const Tracer::f32 kThreshold = 0.0001f;
+    const Tracer::f32 kThreshold = 0.000000000001f;
 }
 
 namespace Tracer {
@@ -26,7 +26,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
     //auto nodes = m_container.AllNodes();
     for (auto node : nodes) {
         if (node.indices.empty()) {
-            return hitInfo.hasHit;
+            continue;
         };
 
         assert(node.indices.size() % 3 == 0);
@@ -51,7 +51,11 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
             /* Calculate the Distance of the Ray and the intersection of the triangles plane  */
             f32 distance = glm::dot(triNormal, (v0.position - ray.origin)) /
                                         glm::dot(triNormal, ray.direction);
-            if (distance < 0.0f && interval.Contains(distance)) {
+            if (distance < 0.0f) {
+                continue;
+            }
+
+            if (!interval.Contains(distance)) {
                 continue;
             }
 
@@ -76,7 +80,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
             /* Check for Degenerate Triangles */
             f32 denominator = d00 * d11 - d01 * d01;
-            if (std::fabs(denominator) < 0.0f) {
+            if (std::fabs(denominator) <= kThreshold) {
                 continue;
             }
 
@@ -193,21 +197,21 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
     };
     findMesh(findMesh, scene->mRootNode);
 
-    /* Fill Vertex */
-    VertexInfo info{};
+    /* Read Mesh Data */
     for (auto node : nodesWithMeshes) {
         auto meshCount = node->mNumMeshes;
         for (i32 i = 0; i < meshCount; i++) {
             Mesh meshObject;
+            VertexInfo meshInfo{};
 
             auto meshIndex = node->mMeshes[i];
             auto mesh = scene->mMeshes[meshIndex];
 
             /* Fill Vertex Information */
-            info.hasPosition = mesh->HasPositions() && !info.hasPosition;
-            info.hasNormals = mesh->HasNormals() && !info.hasNormals;
-            info.hasTextureUVs = mesh->HasTextureCoords(meshIndex) && !info.hasTextureUVs;
-            meshObject.m_info = info;
+            meshInfo.hasPosition = mesh->HasPositions();
+            meshInfo.hasNormals = mesh->HasNormals();
+            meshInfo.hasTextureUVs = mesh->HasTextureCoords(0);
+            meshObject.m_info = meshInfo;
 
             /* Loop over each face and store the vertex and index */
             auto triangleCount = mesh->mNumFaces;
@@ -216,28 +220,22 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                 const auto face = mesh->mFaces[triangleIndex];
 
                 for (auto x = 0; x < 3; x++) {
-                    if (info.hasPosition) {
+                    if (meshInfo.hasPosition) {
                         auto position = mesh->mVertices[face.mIndices[x]];
                         triangleVertices[x].position = Point3(position.x, position.y, position.z);
                         meshObject.m_bbox.Expand(triangleVertices[x].position);
                     }
 
-                    if (info.hasNormals) {
+                    if (meshInfo.hasNormals) {
                         auto normals = mesh->mNormals[face.mIndices[x]];
                         triangleVertices[x].normals = Vector3(normals.x, normals.y, normals.z);
                     }
                     
-                    auto uvChannelCount = mesh->GetNumUVChannels();
-                    if (info.hasTextureUVs) {
-                        for (u32 channel = 0; channel < uvChannelCount; channel++) {
-                            if (mesh->HasTextureCoords(face.mIndices[x])) {
-                                auto uv = mesh->mTextureCoords[channel][face.mIndices[x]];
-                                triangleVertices[x].textureUV = Point2(uv.x, uv.y);
-                            }
-                            else {
-                                triangleVertices[x].textureUV = Point2(0.0f, 0.0f);
-                            }
-                        }
+                    /* FIXME: Add Support for More UV Channels.
+                    Currently we only take the first UV Channel.*/
+                    if (meshInfo.hasTextureUVs) {
+                        auto uv = mesh->mTextureCoords[0][face.mIndices[x]];
+                        triangleVertices[x].textureUV = Point2(uv.x, uv.y);
                     }
                 }
 
@@ -245,9 +243,11 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
                     meshObject.m_vertices.push_back(*iter);
                 }
 
-                for (auto k = 0; k < 3; k++) {
-                    meshObject.m_indices.push_back(face.mIndices[k]);
-                }
+                u64 base = meshObject.m_indices.size();
+                meshObject.m_indices.push_back(base+0);
+                meshObject.m_indices.push_back(base+1);
+                meshObject.m_indices.push_back(base+2);
+                
             }
             // Calculate TrianglesPerNode Based of Index Count and Node Max Limit
             auto targetSize = meshObject.m_indices.size() / 128; //FIXME: Get the Node Limit from the MeshContainer...

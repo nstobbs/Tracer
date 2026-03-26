@@ -27,7 +27,7 @@ public:
     Layer(i32 width, i32 height);
     ~Layer() = default;
 
-    Color4& at(u32 x, u32 y) { return m_data[y][x]; };
+    Color4& at(u32 x, u32 y);
 
     void FloodColor(Color4 color);
     void DrawTestPatten(TestPatten type);

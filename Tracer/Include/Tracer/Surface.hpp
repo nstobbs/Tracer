@@ -23,8 +23,17 @@ public:
     Color4 CalculateColor(const HitInfo& info) override;
 };
 
-/* Displays the Normals */
-class PreviewNormals : public Surface {
+/* Displays the Geometric Normals Created 
+    During Intersection Testing  */
+class GeometricNormals : public Surface {
+public:
+    Color4 CalculateColor(const HitInfo& info) override;
+
+};
+
+/* Displays the Surface Normals Created Using
+the Vertex Normals and Barycentric system */
+class SurfaceNormals : public Surface {
 public:
     Color4 CalculateColor(const HitInfo& info) override;
 

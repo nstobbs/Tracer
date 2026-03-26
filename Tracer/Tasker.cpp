@@ -52,8 +52,8 @@ std::queue<BucketTask> Tasker::createBucketsQueue() {
         /* Calculate Bucket Count */
         u32 width = m_engine->m_image->GetWidth();
         u32 height = m_engine->m_image->GetHeight();
-        u32 bucketWidthSize = width / m_engine->m_bucketSize;
-        u32 bucketHeightSize = height / m_engine->m_bucketSize;
+        u32 bucketWidthSize = (width / m_engine->m_bucketSize) + 1;
+        u32 bucketHeightSize = (height / m_engine->m_bucketSize) + 1;
 
         /* Create Queue of BucketTasks */
         for (u32 Y = 0; Y < bucketHeightSize; Y++) {
