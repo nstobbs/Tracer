@@ -25,16 +25,18 @@ Color4 SurfaceShader::VertexColor::CalculateColor(const HitInfo& info) {
 };
 
 Color4 SurfaceShader::PreviewNormals::CalculateColor(const HitInfo& info) {
-    if (!info.isFrontFace) {
-        return m_backfaceColor;
-    };
+    //if (!info.isFrontFace) {
+    //    return m_backfaceColor;
+    //};
 
     Color4 output(0.0f, 0.0f, 0.0f, 1.0f);
     if (info.type == ShapeType::eTriangle) {
         output = Color4(info.extra.triangle.v0.normals, 1.0f) * static_cast<f32>(info.extra.triangle.u);
         output += Color4(info.extra.triangle.v1.normals, 1.0f) * static_cast<f32>(info.extra.triangle.v);
         output += Color4(info.extra.triangle.v2.normals, 1.0f) * static_cast<f32>(info.extra.triangle.w);
-        output.w = 1.0f;
+        output.z = 1.0f;
+
+        output = Color4(info.normal, 1.0f);
     };
     return output;
 };

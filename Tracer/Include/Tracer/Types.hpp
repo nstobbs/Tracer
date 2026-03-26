@@ -4,10 +4,10 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#include <glm/matrix.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <glm/matrix.hpp>
 
 namespace Tracer {
 

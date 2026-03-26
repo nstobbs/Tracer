@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Tracer/Types.hpp"
+#include "Tracer/Camera.hpp"
 #include "Tracer/Engine.hpp"
 #include "Tracer/Image.hpp"
-#include "Tracer/Camera.hpp"
+#include "Tracer/Types.hpp"
 
 #include <SDL.h>
 #include <SDL_image.h>

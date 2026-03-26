@@ -56,7 +56,7 @@ Application::Application() {
                                                           static_cast<Surface*>(&normalSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
 
-    auto meshes = Mesh::ReadFile("./Models/dragon.obj");
+    auto meshes = Mesh::ReadFile("./Models/teapot.obj");
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Object*>(&mesh));

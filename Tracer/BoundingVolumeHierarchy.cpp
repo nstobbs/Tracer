@@ -121,19 +121,21 @@ void MeshContainer::BuildBVH() {
 
         u32 currentIndex = &node - m_nodes.data();
 
-        node.leftIndex = m_nodes.size();
+        m_nodes.at(currentIndex).leftIndex = m_nodes.size();
         m_nodes.push_back(result.first);
-        printNodeInfo(m_nodes.at(node.leftIndex), node.leftIndex);
-        self(self, m_nodes.at(node.leftIndex));
+        //printNodeInfo(m_nodes.at(node.leftIndex), node.leftIndex);
+        self(self, m_nodes.at(m_nodes.at(currentIndex).leftIndex));
 
         m_nodes.at(currentIndex).rightIndex = m_nodes.size();
         m_nodes.push_back(result.second);
-        printNodeInfo(m_nodes.at(m_nodes.at(currentIndex).rightIndex), m_nodes.at(currentIndex).rightIndex);
+        //printNodeInfo(m_nodes.at(m_nodes.at(currentIndex).rightIndex), m_nodes.at(currentIndex).rightIndex);
         self(self, m_nodes.at(m_nodes.at(currentIndex).rightIndex));
     };
 
     std::printf("Starting BVH Tree Build...\n");
     buildTree(buildTree, m_nodes.front());
+
+    std::printf("BVH Node Count: %i\n", static_cast<i32>(m_nodes.size()));
     std::printf("Finished Building BVH.\n");
 };
 
