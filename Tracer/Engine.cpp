@@ -40,6 +40,11 @@ void Engine::SetSamplesPerPixel(u32 numOfSamples) {
     m_samplesPerPixel = numOfSamples;
 }
 
+void Engine::SetBucketSize(u32 size) {
+    m_version++;
+    m_bucketSize = size;
+}
+
 void Engine::SetTargetLayer(const std::string& layer) {
     m_version++;
     m_targetLayer = layer;
@@ -107,7 +112,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         HitInfo info{};
 
         Object* closeObj = nullptr;
-        f64 closeDistance = Interval().Max();
+        f32 closeDistance = Interval().Max();
         for (auto& object : scene) {
             if (object->isHit(ray, info, Interval(), *m_camera)) {
                 if (info.distance < closeDistance) {

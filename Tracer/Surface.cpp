@@ -57,7 +57,7 @@ Color4 SurfaceShader::SolidColor::CalculateColor(const HitInfo& info) {
 Color4 SurfaceShader::Wireframe::CalculateColor(const HitInfo& info) {
     Color4 output(0.0f, 0.0f, 0.0f, 0.0f);
     if (info.type == ShapeType::eTriangle) {
-        f64 u, v, w;
+        f32 u, v, w;
 
         u = info.extra.triangle.u;
         v = info.extra.triangle.v;

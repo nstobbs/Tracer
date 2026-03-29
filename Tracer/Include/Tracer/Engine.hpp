@@ -27,6 +27,7 @@ public:
     void SetCamera(Camera* camera);
     void SetImage(Image* image);
     void SetSamplesPerPixel(u32 numOfSamples);
+    void SetBucketSize(u32 size);
     void SetTargetLayer(const std::string& layer);
     void SetMissedColor(Color4 color) { m_missedColor = color; };
 
@@ -49,7 +50,7 @@ private:
     u32 m_samplesPerPixel = {10};
     u32 m_bucketSize = {64};
 
-    Color4 m_missedColor = {0.25f, 0.25f, 0.25f, 1.0f};
+    Color4 m_missedColor = {0.0f, 0.0f, 0.0f, 0.0f};
 
     bool m_isRunning = {false};
 

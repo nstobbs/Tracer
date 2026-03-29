@@ -20,7 +20,7 @@ enum class ShapeType {
 class Triangle {
 public:
     Vertex v0, v1, v2;
-    f64 u, v, w;
+    f32 u, v, w;
 };
 
 union ShapeGen {
@@ -30,7 +30,7 @@ union ShapeGen {
 struct HitInfo {
     Point3 position;
     Vector3 normal;
-    f64 distance;
+    f32 distance;
     bool isFrontFace;
     bool hasHit = {false};
 

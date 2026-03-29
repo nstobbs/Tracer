@@ -1,7 +1,7 @@
 #include "Tracer/Vertex.hpp"
 
 namespace Tracer {
-
+//FIXME: This can be removed
 Vertex multiply(Matrix4 matrix, Vertex vertex) {
     Vertex result{};
     Vector4 position = matrix * Vector4(vertex.position, 1.0f);

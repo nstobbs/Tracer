@@ -8,6 +8,7 @@
 
 namespace {
     const Tracer::f32 kThreshold = 0.000000000001f;
+    Tracer::i32 highestNodeCount = 0;
 }
 
 namespace Tracer {
@@ -23,6 +24,14 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera cam
 
     /* Find All of the Triangles to Render from the BVH */
     auto nodes = m_container.FindAllHitNodes(ray);
+
+    /* Report the highest Node Count */
+#if 1
+    if (nodes.size() > highestNodeCount) {
+        highestNodeCount = nodes.size();
+        std::printf("New Highest Node Count Seen: %i\n", highestNodeCount);
+    }
+#endif
     //auto nodes = m_container.AllNodes();
     for (auto node : nodes) {
         if (node.indices.empty()) {
@@ -251,7 +260,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
             }
             // Calculate TrianglesPerNode Based of Index Count and Node Max Limit
             auto targetSize = meshObject.m_indices.size() / 128; //FIXME: Get the Node Limit from the MeshContainer...
-            meshObject.m_container.SetTrianglesPerNode(3);
+            meshObject.m_container.SetTrianglesPerNode(2);
             meshObject.m_container.BuildBVH();
             outputScene.push_back(meshObject);
         }

@@ -55,7 +55,7 @@ public:
     Color4 CalculateColor(const HitInfo& info) override;
 private:
     Color4 m_color;
-    f32 m_lineThickness = {0.005f};
+    f32 m_lineThickness = {0.05f};
 };
 
 /* Displays two SurfaceShaders Merged Together */

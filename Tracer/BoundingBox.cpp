@@ -39,9 +39,9 @@ bool BBox::isHit(const Ray& ray) const {
 };
 
 bool BBox::Contains(Point3 point) const {
-    auto rangeX = Interval(static_cast<f64>(m_min.x), static_cast<f64>(m_max.x));
-    auto rangeY = Interval(static_cast<f64>(m_min.y), static_cast<f64>(m_max.y));
-    auto rangeZ = Interval(static_cast<f64>(m_min.z), static_cast<f64>(m_max.z));
+    auto rangeX = Interval(static_cast<f32>(m_min.x), static_cast<f32>(m_max.x));
+    auto rangeY = Interval(static_cast<f32>(m_min.y), static_cast<f32>(m_max.y));
+    auto rangeZ = Interval(static_cast<f32>(m_min.z), static_cast<f32>(m_max.z));
 
     return rangeX.Contains(point.x) &&
            rangeY.Contains(point.y) &&

@@ -7,7 +7,7 @@
 namespace Tracer {
 
 Camera::Camera() {
-    m_dist = std::uniform_real_distribution<f32>(0.0f, 0.01f);
+    m_dist = std::uniform_real_distribution<f32>(-0.5f, 0.5f);
 }
 
 void Camera::Transform(f32 delta, CameraDirection direction) {
@@ -69,8 +69,11 @@ Ray Camera::GetRay(const Image& image, u32 x, u32 y) {
     /* Tracer::Image - 0, 0 is the Top Left Pixel. 
     Viewport -1.0f, 1.0f is the Top Left Pixel */
 
-    f32 width = image.GetWidth();
-    f32 height =  image.GetHeight();
+    f32 sampleOffsetX = m_dist(m_rd);
+    f32 sampleOffsetY = m_dist(m_rd);
+
+    f32 width = image.GetWidth() + sampleOffsetX;
+    f32 height =  image.GetHeight() + sampleOffsetY; 
     f32 aspectRatio = width / height;
 
     f32 ndcX = (-1.0f + ((static_cast<f32>(x) + 0.5f) * 2.0f / width));
@@ -83,14 +86,7 @@ Ray Camera::GetRay(const Image& image, u32 x, u32 y) {
     Vector3 direction = glm::normalize(forward
                         + right * (ndcX * aspectRatio)
                         + up * ndcY);
-
-    f32 sampleOffsetX = m_dist(m_rd);
-    f32 sampleOffsetY = m_dist(m_rd);
-    Point3 origin = m_position;
-    origin.x += sampleOffsetX;
-    origin.y += sampleOffsetY;
-
-    return Ray(origin, direction);
+    return Ray(m_position, direction);
 };
 
 }

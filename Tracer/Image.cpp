@@ -79,7 +79,7 @@ std::vector<std::string> Image::GetLayerNames() {
     return m_layerNames;
 };
 
-Image Image::ReadImage(const std::string& filepath) {
+Image Image::ReadImage(const std::string& filepath, const std::string& layerName) {
     i32 width, height, channelsCount;
     auto pixels = stbi_load(filepath.c_str(), &width, &height, &channelsCount, STBI_rgb_alpha);
     if (!pixels) {
@@ -87,8 +87,8 @@ Image Image::ReadImage(const std::string& filepath) {
     }
 
     Image output(width, height);
-    output.CreateLayer("RGBA");
-    Layer* RGBA = output.GetLayer("RGBA");
+    output.CreateLayer(layerName);
+    Layer* RGBA = output.GetLayer(layerName);
 
     for (i32 y = 0; y < height; y++) {
         Row& row = RGBA->GetRow(y);

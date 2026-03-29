@@ -50,7 +50,7 @@ public:
     u32 GetWidth() const { return m_width; };
     u32 GetHeight() const { return m_height; };
 
-    static Image ReadImage(const std::string& filepath);
+    static Image ReadImage(const std::string& filepath, const std::string& layerName);
 protected:
     u32 m_width;
     u32 m_height;

@@ -2,11 +2,12 @@
 #include "Tracer/Mesh.hpp"
 
 #include <iostream>
+#include <cstdlib>
 
 namespace {
     const int kWidth = 1280;
     const int kHeight = 720;
-    const bool kHalfRes = false;
+    const bool kHalfRes = true;
 
     const Tracer::f32 kCameraSensitivity = 0.5f; /* Pan and Tilt Speed */
     const Tracer::f32 kCameraSpeed = 1.0f; /* Moving Position Speed */
@@ -16,7 +17,62 @@ namespace {
     const std::string kWindowTitle = "Tracer MainWindow";
 }
 
-Application::Application() {
+/* Application Settings */
+ApplicationSettings::ApplicationSettings(int argc, char** argv) {
+    /* Input Model File Path */
+    if (argc > 1) {
+        m_inputFile = std::string(argv[1]);
+        std::printf("Input Model File Path: %s\n", m_inputFile.c_str());
+    }
+
+    if (argc > 2) {
+        m_width = atoi(argv[2]);
+        std::printf("Window Width: %i\n", m_width);
+    }
+
+    if (argc > 3) {
+        m_height = atoi(argv[3]);
+        std::printf("Window Height: %i\n", m_height);
+    }
+
+    if (argc > 4) {
+        m_bucketSize = atoi(argv[4]);
+        std::printf("Bucket Size: %i\n", m_bucketSize);
+    }
+    
+    if (argc > 5) {
+        m_sampleCount = atoi(argv[5]);
+        std::printf("Sample Count: %i\n", m_sampleCount);
+    }
+
+    if (m_inputFile == "") {
+        std::printf("No Input Model File Path was set...\n./Application.exe <Model File Path> <Window Width> <Window Height> <Bucket Size> <Sample Count>\n");
+        throw std::runtime_error("Exiting...\n");
+    }
+
+    if (m_width == 0) {
+        m_width = kWindowWidth;
+        std::printf("Width was 0. Using %i instead.\n", m_width);
+    }
+
+    if (m_height == 0) {
+        m_height = kWindowHeight;
+        std::printf("Height was 0. Using %i instead.\n", m_height);
+    }
+
+    if (m_bucketSize == 0) {
+        m_bucketSize = 32;
+        std::printf("Bucket Size was 0. Using %i instead.\n", m_bucketSize);
+    }
+
+    if (m_sampleCount == 0) {
+        m_sampleCount = 1;
+        std::printf("Sample Count was 0. Using %i instead.\n", m_sampleCount);
+    }
+};
+
+/* Main Application */
+Application::Application(ApplicationSettings settings) {
     using namespace Tracer;
 
     /* Application Init */
@@ -25,7 +81,7 @@ Application::Application() {
         std::printf("{Error} SDL Failed to Init Video or Image: %s\n", SDL_GetError());
     }
     m_window = SDL_CreateWindow(kWindowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                kWindowWidth, kWindowHeight, SDL_WINDOW_SHOWN);
+                                settings.width(), settings.height(), SDL_WINDOW_SHOWN);
     if (!m_window) {
         std::printf("{Error} SDL Failed to Create Window: %s\n", SDL_GetError());
     }
@@ -42,24 +98,20 @@ Application::Application() {
 
 #if 1
 
-    Image testTexture = Image::ReadImage("./Textures/UV_Checker.png");
-
-    Image inputTexture(1024, 1024);
-    inputTexture.CreateLayer("RGBA");
-    inputTexture.GetLayer("RGBA")->DrawTestPatten(TestPatten::eUVRamp);
-    auto textureSurface = SurfaceShader::UVTexture(&inputTexture, "RGBA");
+    Image testTexture = Image::ReadImage("./Textures/UV_Checker.png", "RGBA");
+    auto textureSurface = SurfaceShader::UVTexture(&testTexture, "RGBA");
 
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     auto solidSurface = SurfaceShader::SolidColor(Color4(1.0f, 0.25f, 0.25f, 1.0f));
     auto geoNormalSurface = SurfaceShader::GeometricNormals();
     auto surfaceNormalsSurface = SurfaceShader::SurfaceNormals();
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
-                                                          static_cast<Surface*>(&geoNormalSurface),
+                                                          static_cast<Surface*>(&textureSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
 
-    auto meshes = Mesh::ReadFile("./Models/dragon.obj");
+    auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
-        mesh.SetSurface(&surface);
+        mesh.SetSurface(&textureSurface);
         m_scene->AddObject(static_cast<Object*>(&mesh));
     }
     
@@ -80,13 +132,14 @@ Application::Application() {
     /* Image Layer Setup */
     std::string renderLayer = "Color";
 
-    m_image = std::make_unique<Image>(kWindowWidth, kWindowHeight);
+    m_image = std::make_unique<Image>(settings.width(), settings.height());
     m_image->CreateLayer(renderLayer);
     m_image->GetLayer(renderLayer)->FloodColor(Color4(0.0f));
 
     m_engine->SetImage(m_image.get());
     m_engine->SetTargetLayer(renderLayer);
-    m_engine->SetSamplesPerPixel(1);
+    m_engine->SetSamplesPerPixel(settings.sampleCount());
+    m_engine->SetBucketSize(settings.bucketSize());
     m_engine->StartRendering();
 
     /* Main Loop */

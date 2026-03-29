@@ -2,6 +2,6 @@
 #include <iostream>
 
 int main(int argc, char **argv) {
-    Application App;
+    Application App(ApplicationSettings(argc, argv));
     return EXIT_SUCCESS;
 }
