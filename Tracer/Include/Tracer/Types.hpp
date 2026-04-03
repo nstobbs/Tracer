@@ -16,6 +16,7 @@ using Point2 = glm::vec2;
 using Vector3 = glm::vec3;
 using Vector4 = glm::vec4;
 using Color4 = glm::vec4;
+using Color3 = glm::vec3;
 
 using Matrix4 = glm::mat4;
 

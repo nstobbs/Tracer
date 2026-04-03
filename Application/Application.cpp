@@ -14,7 +14,6 @@ namespace {
 
     constexpr int kWindowWidth = kHalfRes ? kWidth / 2 : kWidth;
     constexpr int kWindowHeight = kHalfRes ? kHeight / 2 : kHeight;
-    const std::string kWindowTitle = "Tracer MainWindow";
 }
 
 /* Application Settings */
@@ -77,19 +76,7 @@ Application::Application(ApplicationSettings settings) {
 
     /* Application Init */
     std::printf("Starting Application.\n");
-    if (SDL_Init(SDL_INIT_VIDEO) != 0 && IMG_Init(IMG_INIT_PNG) != 0) {
-        std::printf("{Error} SDL Failed to Init Video or Image: %s\n", SDL_GetError());
-    }
-    m_window = SDL_CreateWindow(kWindowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                settings.width(), settings.height(), SDL_WINDOW_SHOWN);
-    if (!m_window) {
-        std::printf("{Error} SDL Failed to Create Window: %s\n", SDL_GetError());
-    }
-
-    m_windowRenderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_SOFTWARE);
-    if (!m_windowRenderer) {
-        std::printf("{Error} SDL Failed to Create Window Renderer: %s\n", SDL_GetError());
-    }
+    m_window = std::make_unique<Window>(settings.width(), settings.height());
 
     /* Tracer Engine & Scene Setup */
     m_engine = std::make_unique<Engine>();
@@ -134,7 +121,7 @@ Application::Application(ApplicationSettings settings) {
 
     m_image = std::make_unique<Image>(settings.width(), settings.height());
     m_image->CreateLayer(renderLayer);
-    m_image->GetLayer(renderLayer)->FloodColor(Color4(0.0f));
+    //m_image->GetLayer(renderLayer)->DrawTestPatten(TestPatten::eChecker);
 
     m_engine->SetImage(m_image.get());
     m_engine->SetTargetLayer(renderLayer);
@@ -187,7 +174,8 @@ Application::Application(ApplicationSettings settings) {
 
         /* Render */
         m_engine->Tick();
-        PresentLayerToWindow(m_image->GetLayer(renderLayer), m_window);
+        m_window->displayLayerToWindow(m_image->GetLayer(renderLayer));
+        m_window->presentWindow();
     }
 };
 
@@ -195,49 +183,5 @@ Application::~Application() {
     std::printf("Shuting Down Application.\n");
     m_engine->StopRendering();
     m_shutdown = true;
-    SDL_DestroyRenderer(m_windowRenderer);
-    SDL_DestroyWindow(m_window);
     SDL_Quit();
-};
-
-void Application::PresentLayerToWindow(Tracer::Layer* layer, SDL_Window* window) {
-    if (!layer) {
-        return;
-    }
-
-    SDL_Texture* texture = nullptr;
-    SDL_Surface* surface = SDL_GetWindowSurface(window);
-    if (!surface) {
-        std::printf("{Error} Failed to Get WindowSurface: %s\n", IMG_GetError());
-    }
-
-    SDL_LockSurface(surface);
-    auto sPixel = static_cast<uint8_t*>(surface->pixels);
-    auto sPitch = surface->pitch;
-    auto sBytesPerPixel = surface->format->BytesPerPixel;
-
-    auto height = layer->GetRowCount();
-    for (int y = 0; y < height; y++) {
-        auto row = layer->GetRow(y);
-        auto width = row.size();
-        for (int x = 0; x < width; x++) {
-            auto pixel = row[x];
-            sPixel[y*sPitch + x*sBytesPerPixel + 0] = static_cast<uint8_t>(255*pixel.b);
-            sPixel[y*sPitch + x*sBytesPerPixel + 1] = static_cast<uint8_t>(255*pixel.g);
-            sPixel[y*sPitch + x*sBytesPerPixel + 2] = static_cast<uint8_t>(255*pixel.r);
-        }
-    }
-    SDL_UnlockSurface(surface);
-
-    texture = SDL_CreateTextureFromSurface(m_windowRenderer, surface);
-    if (!texture) {
-        std::printf("{Error} Failed to Create Texture From Surface: %s\n", SDL_GetError());
-    }
-    SDL_FreeSurface(surface);
-
-    SDL_RenderClear(m_windowRenderer);
-    SDL_RenderCopy(m_windowRenderer, texture, nullptr, nullptr);
-    SDL_RenderPresent(m_windowRenderer);
-
-    SDL_DestroyTexture(texture);
 };
