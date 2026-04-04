@@ -9,10 +9,14 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <glm/gtc/type_ptr.hpp>
+
 namespace Tracer {
 
 using Point3 = glm::vec3;
 using Point2 = glm::vec2;
+
+using Vector2 = glm::vec2;
 using Vector3 = glm::vec3;
 using Vector4 = glm::vec4;
 using Color4 = glm::vec4;

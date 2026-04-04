@@ -1,99 +1,21 @@
-#include "Application/Window.hpp"
-#include "Application/OpenGlHelper.hpp"
+#include "Window/DisplayLayerRenderPass.hpp"
 
-#include <vector>
-
-namespace {
-    const std::string kWindowTitle = "Tracer MainWindow";
-}
-
-Window::Window(i32 width, i32 height) : m_width(width), m_height(height) {
-    /* Init SDL */
-    std::printf("Creating Window.\n");
-    if (SDL_Init(SDL_INIT_VIDEO) != 0 && IMG_Init(IMG_INIT_PNG) != 0) {
-        std::printf("{Error} SDL Failed to Init Video or Image: %s\n", SDL_GetError());
-    }
-
-    /* OpenGL Attributes */
-    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) != 0) {
-        std::printf("{Error} SDL Failed to Set OpenGL Attribute: %s\n", SDL_GetError());
-    }
-
-    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4) != 0) {
-        std::printf("{Error} SDL Failed to Set OpenGL Attribute: %s\n", SDL_GetError());
-    }
-    
-    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2)  != 0) {
-        std::printf("{Error} SDL Failed to Set OpenGL Attribute: %s\n", SDL_GetError());
-    }
-
-    /* Init SDL Window */
-    m_window = SDL_CreateWindow(kWindowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        m_width, m_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-    if (!m_window) {
-        std::printf("{Error} SDL Failed to Create Window: %s\n", SDL_GetError());
-    }
-    
-    /* Init GL, GlEW*/
-    m_glContext = SDL_GL_CreateContext(m_window);
-    if (!m_glContext) {
-        std::printf("{Error} SDL Failed to Create GL Context: %s\n", SDL_GetError());
-    }
-
-    glewExperimental = GL_TRUE;
-    GLenum glewError = glewInit();
-    if (glewError != GLEW_OK) {
-        std::printf("{Error} GLEW Failed to Init: %s\n", glewGetErrorString(glewError));
-    }
-    
-    if (SDL_GL_SetSwapInterval(0) != 0) {
-        std::printf("{Error} SDL Failed to Set VSync Setting: %s", SDL_GetError());
-    }
-
-    if (!createGLResources()) {
-        std::printf("{Error} Failed to Allocate OpenGL Resources.\n");
-    };
-}
-
-bool Window::createGLResources() {
-    std::printf("Creating OpenGL Resources.\n");
-
+bool DisplayLayerRenderPass::init() {
     /* Create and Compile Shaders */
-    m_vertexShader = glCreateShader(GL_VERTEX_SHADER);
     auto vertexSourceString = vertexSource();
-    const GLchar* vertexSource = vertexSourceString.c_str();
-    glShaderSource(m_vertexShader, 1, &vertexSource, NULL);
-    glCompileShader(m_vertexShader);
-    GLint vertexShaderCompiled = GL_FALSE;
-    glGetShaderiv(m_vertexShader, GL_COMPILE_STATUS, &vertexShaderCompiled);
-    if (vertexShaderCompiled != GL_TRUE) {
-        const char* vertexLogs = OpenGlHelper::GetShaderLogs(m_vertexShader);
-        std::printf("{Error} Failed to Compile Vertex Shader: %s\n", vertexLogs);
+    m_vertexShader = OpenGlHelper::CreateVertexShader(vertexSourceString); 
+    if (m_vertexShader == -1) {
         return false;
     }
 
-    m_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     auto fragmentSourceString = fragmentSource();
-    const GLchar* fragmentSource = fragmentSourceString.c_str();
-    glShaderSource(m_fragmentShader, 1, &fragmentSource, NULL);
-    glCompileShader(m_fragmentShader);
-    GLint fragmentShaderCompiled = GL_FALSE;
-    glGetShaderiv(m_fragmentShader, GL_COMPILE_STATUS, &fragmentShaderCompiled);
-    if (fragmentShaderCompiled != GL_TRUE) {
-        const char* fragmentLog = OpenGlHelper::GetShaderLogs(m_fragmentShader);
-        std::printf("{Error} Failed to Compile Fragment Shader: %s\n", fragmentLog);
+    m_fragmentShader = OpenGlHelper::CreateFragmentShader(fragmentSourceString);
+    if (m_fragmentShader == -1) {
         return false;
     }
 
-    m_shaderProgram = glCreateProgram();
-    glAttachShader(m_shaderProgram, m_vertexShader);
-    glAttachShader(m_shaderProgram, m_fragmentShader);
-    glLinkProgram(m_shaderProgram);
-    GLint programLinked = GL_FALSE;
-    glGetProgramiv(m_shaderProgram, GL_LINK_STATUS, &programLinked);
-    if (programLinked != GL_TRUE) {
-        const char* programLog = OpenGlHelper::GetProgramLogs(m_shaderProgram);
-        std::printf("{Error} Failed to Link Shaders to Program: %s\n", programLog);
+    m_shaderProgram = OpenGlHelper::CreateProgram(m_vertexShader, m_fragmentShader);
+    if (m_shaderProgram == -1) {
         return false;
     }
 
@@ -109,9 +31,6 @@ bool Window::createGLResources() {
         std::printf("{Error} Couldn't find inUV in Vertex Shader.\n");
         return false;
     }
-
-    /* Set Clear Colour  */
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     /* Vertex Array Buffer */
     glGenVertexArrays(1, &m_vertexArrayBuffer);
@@ -150,16 +69,12 @@ bool Window::createGLResources() {
         glBufferData(GL_PIXEL_UNPACK_BUFFER, imageBufferSize, nullptr, GL_STREAM_DRAW);
     }
     return true;
-};
-
-void Window::resizeWindow(i32 width, i32 height) {
-
 }
 
-void Window::displayLayerToWindow(Tracer::Layer* layer) {
+void DisplayLayerRenderPass::render(RenderContext& context) {
+    /* Copy Layer to Device */
     i32 upload = m_swapIndex;
     i32 map = (m_swapIndex + 1) % 2;
-
     glBindTexture(GL_TEXTURE_2D, m_displayTexture);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pixelBuffers[upload]);
 
@@ -173,7 +88,7 @@ void Window::displayLayerToWindow(Tracer::Layer* layer) {
         // Copying to Device faster.
         std::vector<Color3> outImage;
         for (i32 y = 0; y < m_height; y++) {
-            auto& row = layer->GetRow(y);
+            auto& row = context.layer->GetRow(y);
             for (i32 x = 0; x < m_width; x++) {
                 outImage.push_back(Color3(row.at(x).r, row.at(x).g, row.at(x).b));
             }
@@ -181,14 +96,10 @@ void Window::displayLayerToWindow(Tracer::Layer* layer) {
         memcpy(ptr, outImage.data(), imageBufferSize);
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     }
-
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     m_swapIndex = (m_swapIndex + 1) % 2;
-}
 
-void Window::presentWindow() {
-    glClear(GL_COLOR_BUFFER_BIT);
-
+    /* Execute Gl Program */
     glUseProgram(m_shaderProgram);
 
     GLuint samplerLocation = glGetUniformLocation(m_shaderProgram, "inImage");
@@ -216,11 +127,9 @@ void Window::presentWindow() {
 
     glUseProgram(NULL);
     glBindVertexArray(NULL);
-
-    SDL_GL_SwapWindow(m_window);
 }
 
-Window::~Window() {
+void DisplayLayerRenderPass::cleanup() {
     glDeleteProgram(m_shaderProgram);
     glDeleteShader(m_vertexShader);
     glDeleteShader(m_fragmentShader);
@@ -235,13 +144,10 @@ Window::~Window() {
     for (auto& buffer : m_pixelBuffers) {
         glDeleteBuffers(1, &buffer);
     }
-
-    SDL_GL_DeleteContext(m_glContext);
-    SDL_DestroyWindow(m_window);
 }
 
 /* Shader Source Code */
-std::string Window::vertexSource() {
+std::string DisplayLayerRenderPass::vertexSource() {
     std::string source = R"(
         #version 330 core
         layout (location = 0) in vec2 inPosition;
@@ -256,7 +162,7 @@ std::string Window::vertexSource() {
     return source;
 }
 
-std::string Window::fragmentSource() {
+std::string DisplayLayerRenderPass::fragmentSource() {
     std::string source = R"(
         #version 330 core
         uniform sampler2D inImage;

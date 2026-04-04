@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Application/Window.hpp"
+#include "Window/Window.hpp"
 
 #include "Tracer/Camera.hpp"
 #include "Tracer/Engine.hpp"
@@ -15,7 +15,7 @@ public:
     const std::string& inputFile() const { return m_inputFile; }
     const Tracer::i32& width() const { return m_width; }
     const Tracer::i32& height() const { return m_height; }
-    const Tracer::i32& bucketSize() const { return m_bucketSize; }
+    const Tracer::i32& tileSize() const { return m_tileSize; }
     const Tracer::i32& sampleCount() const { return m_sampleCount; }
 
 private:
@@ -24,7 +24,7 @@ private:
     Tracer::i32 m_width = {0};
     Tracer::i32 m_height = {0};
 
-    Tracer::i32 m_bucketSize = {0};
+    Tracer::i32 m_tileSize = {0};
     Tracer::i32 m_sampleCount = {0};
 };
 

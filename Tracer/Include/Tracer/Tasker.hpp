@@ -13,7 +13,7 @@ namespace {
     using SubmitTask = std::function<void()>;
     using RenderTask = std::function<void()>;
     
-    struct BucketTask {
+    struct TileTask {
         RenderTask task;
         Tracer::u32 x, y;
     };
@@ -23,7 +23,7 @@ namespace Tracer {
 
 class Engine;
 
-enum class BucketOrder {
+enum class TileOrder {
     eInvalid = -1,
     eLeftToRight = 0,
     eCenterOut = 1,
@@ -35,14 +35,14 @@ public:
     Tasker(Engine* engine);
     ~Tasker();
 
-    void SetBucketOrder(BucketOrder order);
+    void SetTileOrder(TileOrder order);
 
     void SubmitFrameToPool();
-    void SubmitFrameToPool(BucketOrder override);
+    void SubmitFrameToPool(TileOrder override);
 
 private:
-    std::queue<BucketTask> createBucketsQueue();
-    std::queue<BucketTask> sortBuckets(std::queue<BucketTask> queue, BucketOrder order);
+    std::queue<TileTask> createTilesQueue();
+    std::queue<TileTask> sortTiles(std::queue<TileTask> queue, TileOrder order);
     void execute();
     
     std::thread m_thread;
@@ -53,7 +53,7 @@ private:
     bool m_stop = {false};
     bool m_submittingFrame = {false};
 
-    BucketOrder m_bucketOrder = {BucketOrder::eCenterOut};
+    TileOrder m_tileOrder = {TileOrder::eCenterOut};
 
     friend class Engine;
     Engine* m_engine = {nullptr};

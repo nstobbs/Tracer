@@ -1,8 +1,8 @@
+add_subdirectory(Window)
+
 add_executable(Application
         main.cpp
         Application.cpp
-        Window.cpp
-        OpenGlHelper.cpp
 )
 
 find_package(SDL2 REQUIRED)
@@ -19,4 +19,5 @@ target_link_libraries(Application PUBLIC
     SDL2::SDL2main
     SDL2_image::SDL2_image
     GLEW::GLEW
+    Window
 )

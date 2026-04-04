@@ -23,4 +23,5 @@ target_link_libraries(Tracer
     glm::glm
     assimp::assimp
     stb
+    Window
 )

@@ -40,14 +40,22 @@ void Engine::SetSamplesPerPixel(u32 numOfSamples) {
     m_samplesPerPixel = numOfSamples;
 }
 
-void Engine::SetBucketSize(u32 size) {
+void Engine::SetTileSize(u32 size) {
     m_version++;
-    m_bucketSize = size;
+    m_tileSize = size;
+    if (m_activeList) {
+        m_activeList->tileSize = size;
+    }
 }
 
 void Engine::SetTargetLayer(const std::string& layer) {
     m_version++;
     m_targetLayer = layer;
+}
+
+void Engine::SetActiveTilesRecord(ActiveTilesRecord* activeList) {
+    m_activeList = activeList;
+    m_activeList->tileSize = m_tileSize;
 }
 
 void Engine::StartRendering() {
@@ -64,26 +72,43 @@ void Engine::Tick() {
         if (m_version != m_prevVersion || m_prevCameraVersion != m_camera->GetCameraVersion()) { // TODO: Clean this up.
             m_prevVersion = m_version;
             m_prevCameraVersion = m_camera->GetCameraVersion();
-            m_tasker->SetBucketOrder(BucketOrder::eCenterOut);
+            m_tasker->SetTileOrder(TileOrder::eCenterOut);
             m_tasker->SubmitFrameToPool();
         }
     }
 }
 
-void Engine::RenderBucket(u32 x, u32 y) const {
-    std::vector<std::pair<u32, u32>> pixelCoords;
-    for (u32 bY = 0; bY < m_bucketSize; bY++) {
-        for (u32 bX = 0; bX < m_bucketSize; bX++) {
-            pixelCoords.emplace_back(x + bX, y + bY);
+void Engine::RenderTile(u32 x, u32 y) {
+    i32 tileID;
+    /* Record Active Tile - For TileCrosshair HUD */
+    if (m_activeList) {
+        {
+            std::unique_lock<std::mutex> lock(m_activeList->mutex);
+            tileID = m_activeList->lifetimeTileCount++;
+            m_activeList->active.emplace(tileID, std::pair<i32, i32>(x, y));
         }
     }
 
+    /* Randomly Shuffle Calculate Pixel Tasks */
+    std::vector<std::pair<u32, u32>> pixelCoords;
+    for (u32 bY = 0; bY < m_tileSize; bY++) {
+        for (u32 bX = 0; bX < m_tileSize; bX++) {
+            pixelCoords.emplace_back(x + bX, y + bY);
+        }
+    }
     std::mt19937 rng(std::random_device{}());
     std::shuffle(pixelCoords.begin(), pixelCoords.end(), rng);
-
     for (auto& [x, y] : pixelCoords) {
         CalculatePixelColor(x, y);
-    }  
+    }
+
+    /* Remove Tile From Record - For TileCrosshair HUD*/
+    if (m_activeList) {
+        {
+            std::unique_lock<std::mutex> lock(m_activeList->mutex);
+            m_activeList->active.erase(tileID);
+        }
+    }
 }
 
 Color4 Engine::GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const {

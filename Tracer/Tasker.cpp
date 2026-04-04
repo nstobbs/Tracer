@@ -40,37 +40,37 @@ Tasker::~Tasker() {
     m_thread.join();
 };
 
-void Tasker::SetBucketOrder(BucketOrder order) {
-    if (order != BucketOrder::eInvalid) {
-        m_bucketOrder = order;
+void Tasker::SetTileOrder(TileOrder order) {
+    if (order != TileOrder::eInvalid) {
+        m_tileOrder = order;
     }
 };
 
-std::queue<BucketTask> Tasker::createBucketsQueue() {
-    std::queue<BucketTask> bucketQueue;
+std::queue<TileTask> Tasker::createTilesQueue() {
+    std::queue<TileTask> tileQueue;
     if (m_engine->m_targetLayer != "eInvalid") {
-        /* Calculate Bucket Count */
+        /* Calculate Tile Count */
         u32 width = m_engine->m_image->GetWidth();
         u32 height = m_engine->m_image->GetHeight();
-        u32 bucketWidthSize = (width / m_engine->m_bucketSize) + 1;
-        u32 bucketHeightSize = (height / m_engine->m_bucketSize) + 1;
+        u32 tileWidthSize = (width / m_engine->m_tileSize) + 1;
+        u32 tileHeightSize = (height / m_engine->m_tileSize) + 1;
 
-        /* Create Queue of BucketTasks */
-        for (u32 Y = 0; Y < bucketHeightSize; Y++) {
-            for (u32 X = 0; X < bucketWidthSize; X++) {
-                BucketTask bucket{};
-                u32 topLeftX = X * m_engine->m_bucketSize - (m_engine->m_bucketSize / 2);
-                u32 topLeftY = Y * m_engine->m_bucketSize - (m_engine->m_bucketSize / 2);
-                bucket.x = topLeftX;
-                bucket.y = topLeftY;
-                bucket.task = [this, topLeftX, topLeftY]{
-                    this->m_engine->RenderBucket(topLeftX, topLeftY);
+        /* Create Queue of TileTasks */
+        for (u32 Y = 0; Y < tileHeightSize; Y++) {
+            for (u32 X = 0; X < tileWidthSize; X++) {
+                TileTask tile{};
+                u32 topLeftX = X * m_engine->m_tileSize - (m_engine->m_tileSize / 2);
+                u32 topLeftY = Y * m_engine->m_tileSize - (m_engine->m_tileSize / 2);
+                tile.x = topLeftX;
+                tile.y = topLeftY;
+                tile.task = [this, topLeftX, topLeftY]{
+                    this->m_engine->RenderTile(topLeftX, topLeftY);
                 };
-                bucketQueue.emplace(bucket);
+                tileQueue.emplace(tile);
             }
         }
     }
-    return bucketQueue;
+    return tileQueue;
 };
 
 void Tasker::SubmitFrameToPool() {
@@ -84,52 +84,48 @@ void Tasker::SubmitFrameToPool() {
     m_cv.notify_one();
 };
 
-void Tasker::SubmitFrameToPool(BucketOrder override) {
+void Tasker::SubmitFrameToPool(TileOrder override) {
 
 };
 
-std::queue<BucketTask> Tasker::sortBuckets(std::queue<BucketTask> queue, BucketOrder order) {
-    std::multimap<f32, BucketTask> distanceBucketsMap;
-    if (order != BucketOrder::eInvalid) {
+std::queue<TileTask> Tasker::sortTiles(std::queue<TileTask> queue, TileOrder order) {
+    std::multimap<f32, TileTask> distanceTilesMap;
+    if (order != TileOrder::eInvalid) {
         switch (order) {
-            case BucketOrder::eLeftToRight:
+            case TileOrder::eLeftToRight:
                 break;
-            case BucketOrder::eCenterOut:
-                /*Calculate the Image Center.
-                Calculate the Distance from the bucket to Image Center. 
-                Sort in that Order*/
+            case TileOrder::eCenterOut:
                 Point2 imageCenter = Point2(static_cast<f32>(m_engine->m_image->GetWidth()) / 2.0f,
                                             static_cast<f32>(m_engine->m_image->GetHeight()) / 2.0f);
                 while (!queue.empty()) {
-                    BucketTask task = queue.front();
+                    TileTask task = queue.front();
                     queue.pop();
 
-                    f32 bucketOffset = m_engine->m_bucketSize / 2.0f;
+                    f32 tileOffset = m_engine->m_tileSize / 2.0f;
 
-                    Point2 taskPosition = Point2(static_cast<f32>(task.x + bucketOffset),
-                                                 static_cast<f32>(task.y - bucketOffset));
+                    Point2 taskPosition = Point2(static_cast<f32>(task.x + tileOffset),
+                                                 static_cast<f32>(task.y - tileOffset));
                     Point2 delta = imageCenter - taskPosition;
                     delta.x = delta.x * delta.x;
                     delta.y = delta.y * delta.y;
                     f32 distance = delta.x + delta.y;
                     distance = std::sqrt(distance);
-                    distanceBucketsMap.emplace(distance, task);
+                    distanceTilesMap.emplace(distance, task);
                 };
                 
-                for (auto task : distanceBucketsMap) {
+                for (auto task : distanceTilesMap) {
                     queue.emplace(task.second);
                 }
                 break;
         }
     }
-
-return queue;
+    return queue;
 };
 
 void Tasker::execute() {
     m_submittingFrame = true;
-    std::queue<BucketTask> tasks = createBucketsQueue();
-    tasks = sortBuckets(tasks, m_bucketOrder);
+    std::queue<TileTask> tasks = createTilesQueue();
+    tasks = sortTiles(tasks, m_tileOrder);
     while (!tasks.empty()) {
         m_engine->m_pool->sumbitTask(std::move(tasks.front().task));
         tasks.pop();

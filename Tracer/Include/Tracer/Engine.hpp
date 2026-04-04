@@ -8,6 +8,8 @@
 #include "Tracer/ThreadPool.hpp"
 #include "Tracer/Tasker.hpp"
 
+#include "Window/TileCrosshairRenderPass.hpp"
+
 /*
 @name Tracer::Engine
 
@@ -27,9 +29,10 @@ public:
     void SetCamera(Camera* camera);
     void SetImage(Image* image);
     void SetSamplesPerPixel(u32 numOfSamples);
-    void SetBucketSize(u32 size);
+    void SetTileSize(u32 size);
     void SetTargetLayer(const std::string& layer);
     void SetMissedColor(Color4 color) { m_missedColor = color; };
+    void SetActiveTilesRecord(ActiveTilesRecord* activeList);
 
     Image* GetTargetImage() { return m_image; }
 
@@ -39,7 +42,7 @@ public:
     void Tick();
 
 private:
-    void RenderBucket(u32 x, u32 y) const;
+    void RenderTile(u32 x, u32 y);
 
     Layer* GetTargetLayer() const { return m_image->GetLayer(m_targetLayer); }
 
@@ -48,7 +51,7 @@ private:
     Vector3 SampleSquare() const;
 
     u32 m_samplesPerPixel = {10};
-    u32 m_bucketSize = {64};
+    u32 m_tileSize = {64};
 
     Color4 m_missedColor = {0.0f, 0.0f, 0.0f, 0.0f};
 
@@ -68,5 +71,6 @@ private:
     friend class Tasker;
     UniquePtr<Tasker> m_tasker;
     UniquePtr<ThreadPool> m_pool;
+    ActiveTilesRecord* m_activeList = {nullptr};
 };
 }

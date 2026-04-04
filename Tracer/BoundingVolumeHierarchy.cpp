@@ -3,6 +3,7 @@
 #include "Tracer/Interval.hpp"
 
 #include <iostream>
+#include <algorithm>
 
 namespace {
         const Tracer::u32 kMaxNodes = 128;
@@ -163,6 +164,7 @@ std::vector<MeshNode> MeshContainer::FindAllHitNodes(const Ray& ray) const {
     if (m_nodes.front().bbox.isHit(ray)) {
         findNodes(findNodes, ray, m_nodes.front());
     }
+    std::reverse(results.begin(), results.end());
     return results;
 }
 

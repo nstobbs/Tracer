@@ -35,8 +35,8 @@ ApplicationSettings::ApplicationSettings(int argc, char** argv) {
     }
 
     if (argc > 4) {
-        m_bucketSize = atoi(argv[4]);
-        std::printf("Bucket Size: %i\n", m_bucketSize);
+        m_tileSize = atoi(argv[4]);
+        std::printf("Tile Size: %i\n", m_tileSize);
     }
     
     if (argc > 5) {
@@ -45,7 +45,7 @@ ApplicationSettings::ApplicationSettings(int argc, char** argv) {
     }
 
     if (m_inputFile == "") {
-        std::printf("No Input Model File Path was set...\n./Application.exe <Model File Path> <Window Width> <Window Height> <Bucket Size> <Sample Count>\n");
+        std::printf("No Input Model File Path was set...\n./Application.exe <Model File Path> <Window Width> <Window Height> <Tile Size> <Sample Count>\n");
         throw std::runtime_error("Exiting...\n");
     }
 
@@ -59,9 +59,9 @@ ApplicationSettings::ApplicationSettings(int argc, char** argv) {
         std::printf("Height was 0. Using %i instead.\n", m_height);
     }
 
-    if (m_bucketSize == 0) {
-        m_bucketSize = 32;
-        std::printf("Bucket Size was 0. Using %i instead.\n", m_bucketSize);
+    if (m_tileSize == 0) {
+        m_tileSize = 32;
+        std::printf("Tile Size was 0. Using %i instead.\n", m_tileSize);
     }
 
     if (m_sampleCount == 0) {
@@ -80,25 +80,26 @@ Application::Application(ApplicationSettings settings) {
 
     /* Tracer Engine & Scene Setup */
     m_engine = std::make_unique<Engine>();
+    m_engine->SetActiveTilesRecord(m_window->getActiveTilesRecord());
     m_scene = std::make_unique<Scene>();
     m_camera = std::make_unique<Camera>();
 
 #if 1
 
-    Image testTexture = Image::ReadImage("./Textures/UV_Checker.png", "RGBA");
+    Image testTexture = Image::ReadImage("./Textures/1K_Test_PNG_Texture.png", "RGBA");
     auto textureSurface = SurfaceShader::UVTexture(&testTexture, "RGBA");
 
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
-    auto solidSurface = SurfaceShader::SolidColor(Color4(1.0f, 0.25f, 0.25f, 1.0f));
+    auto solidSurface = SurfaceShader::SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
     auto geoNormalSurface = SurfaceShader::GeometricNormals();
     auto surfaceNormalsSurface = SurfaceShader::SurfaceNormals();
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
-                                                          static_cast<Surface*>(&textureSurface),
+                                                          static_cast<Surface*>(&surfaceNormalsSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
 
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
-        mesh.SetSurface(&textureSurface);
+        mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Object*>(&mesh));
     }
     
@@ -122,12 +123,15 @@ Application::Application(ApplicationSettings settings) {
     m_image = std::make_unique<Image>(settings.width(), settings.height());
     m_image->CreateLayer(renderLayer);
     //m_image->GetLayer(renderLayer)->DrawTestPatten(TestPatten::eChecker);
-
+    
     m_engine->SetImage(m_image.get());
     m_engine->SetTargetLayer(renderLayer);
     m_engine->SetSamplesPerPixel(settings.sampleCount());
-    m_engine->SetBucketSize(settings.bucketSize());
+    m_engine->SetTileSize(settings.tileSize());
     m_engine->StartRendering();
+
+    m_window->setTarget(m_image->GetLayer(renderLayer), m_camera.get());
+
 
     /* Main Loop */
     SDL_Event event;
@@ -174,8 +178,7 @@ Application::Application(ApplicationSettings settings) {
 
         /* Render */
         m_engine->Tick();
-        m_window->displayLayerToWindow(m_image->GetLayer(renderLayer));
-        m_window->presentWindow();
+        m_window->renderWindow();
     }
 };
 
