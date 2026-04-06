@@ -44,14 +44,14 @@ public:
 private:
     void RenderTile(u32 x, u32 y);
 
+    bool hasVersionChanged(); /* Returns true if the engine or camera version has changed */
     Layer* GetTargetLayer() const { return m_image->GetLayer(m_targetLayer); }
-
     Color4 GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const;
     void CalculatePixelColor(u32 x, u32 y) const;
     Vector3 SampleSquare() const;
 
-    u32 m_samplesPerPixel = {10};
-    u32 m_tileSize = {64};
+    u32 m_samplesPerPixel = {1};
+    u32 m_tileSize = {32};
 
     Color4 m_missedColor = {0.0f, 0.0f, 0.0f, 0.0f};
 
@@ -62,8 +62,8 @@ private:
     Image* m_image = {nullptr};
 
     u64 m_version = {0};
-    u64 m_prevVersion = {0};
-    u64 m_prevCameraVersion = {0};
+    u64 m_lastVersion = {0};
+    u64 m_lastCameraVersion = {0};
 
     std::string m_targetLayer = "eInvalid";
 

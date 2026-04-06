@@ -8,6 +8,7 @@
 
 #include "Window/DisplayLayerRenderPass.hpp"
 #include "Window/TileCrosshairRenderPass.hpp"
+#include "Window/BBoxRenderPass.hpp"
 
 #include <array>
 
@@ -24,7 +25,10 @@ public:
 	void setTarget(Layer* layer, Camera* camera);
 	void renderWindow();
 
+	TileCrosshairRenderPass* getTileCrossHairHUD() const { return m_tileCrosshairPass.get(); }
+	BBoxRenderPass* getBBoxDisplayHUD() const { return m_bboxDisplayPass.get(); }
 	ActiveTilesRecord* getActiveTilesRecord() const;
+
 private:
 	bool createGLResources();
 
@@ -36,6 +40,7 @@ private:
 	UniquePtr<DisplayLayerRenderPass> m_displayLayerPass;
 	UniquePtr<TileCrosshairRenderPass> m_tileCrosshairPass;
 	UniquePtr<ActiveTilesRecord> m_activeTilesRecord;
+	UniquePtr<BBoxRenderPass> m_bboxDisplayPass;
 	Layer* m_displayLayer = {nullptr};
 	Camera* m_tracerCamera = {nullptr};
 

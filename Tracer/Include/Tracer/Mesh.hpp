@@ -22,6 +22,8 @@ public:
     const std::vector<Vertex>& GetVertices() const { return m_vertices; }
     const std::vector<u64>& GetIndices() const { return m_indices; }
 
+    BVH::MeshContainer* getMeshContainer() { return &m_container; }
+
 private:
     VertexInfo m_info;
     std::vector<Vertex> m_vertices;

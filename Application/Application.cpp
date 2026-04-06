@@ -81,6 +81,7 @@ Application::Application(ApplicationSettings settings) {
     /* Tracer Engine & Scene Setup */
     m_engine = std::make_unique<Engine>();
     m_engine->SetActiveTilesRecord(m_window->getActiveTilesRecord());
+
     m_scene = std::make_unique<Scene>();
     m_camera = std::make_unique<Camera>();
 
@@ -91,7 +92,7 @@ Application::Application(ApplicationSettings settings) {
 
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     auto solidSurface = SurfaceShader::SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
-    auto geoNormalSurface = SurfaceShader::GeometricNormals();
+    auto geometricNormalSurface = SurfaceShader::GeometricNormals();
     auto surfaceNormalsSurface = SurfaceShader::SurfaceNormals();
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
                                                           static_cast<Surface*>(&surfaceNormalsSurface),
@@ -131,6 +132,7 @@ Application::Application(ApplicationSettings settings) {
     m_engine->StartRendering();
 
     m_window->setTarget(m_image->GetLayer(renderLayer), m_camera.get());
+    m_window->getBBoxDisplayHUD()->setScene(m_scene.get());
 
 
     /* Main Loop */
@@ -172,6 +174,27 @@ Application::Application(ApplicationSettings settings) {
                     m_camera->Transform(kCameraSensitivity, CameraDirection::ePanLeft);
                 } else if (event.key.keysym.sym == SDLK_RIGHT) {
                     m_camera->Transform(kCameraSensitivity, CameraDirection::ePanRight);
+                }
+                /* Toggle Different HUD Elements 
+                1 = Toggle Active Tile Crosshair 
+                2 = Toggle Bounding Box Display 
+                3 = Toggle Bounding Box Heatmap */
+                else if (event.key.keysym.sym == SDLK_1) {
+                    auto* hudElement = m_window->getTileCrossHairHUD();
+                    if (hudElement->isEnabled()) {
+                        hudElement->disable();
+                    } else {
+                        hudElement->enable();
+                    }
+                } else if (event.key.keysym.sym == SDLK_2) {
+                    auto* hudElement = m_window->getBBoxDisplayHUD();
+                    if (hudElement->isEnabled()) {
+                        hudElement->disable();
+                    } else {
+                        hudElement->enable();
+                    }
+                } else if (event.key.keysym.sym == SDLK_3) {
+
                 }
             }
         };

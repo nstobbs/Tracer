@@ -3,6 +3,7 @@ add_library(Window STATIC
     OpenGlHelper.cpp
     DisplayLayerRenderPass.cpp
     TileCrosshairRenderPass.cpp
+    BBoxRenderPass.cpp
 )
 
 find_package(SDL2 REQUIRED)

@@ -49,13 +49,18 @@ Window::Window(i32 width, i32 height) : m_width(width), m_height(height) {
         std::printf("{Error} SDL Failed to Set VSync Setting: %s", SDL_GetError());
     }
 
-    /* Add Default Render Passes */
+    /* Create Render Passes */
     m_displayLayerPass = std::make_unique<DisplayLayerRenderPass>(m_width, m_height);
 
     m_activeTilesRecord = std::make_unique<ActiveTilesRecord>();
     m_tileCrosshairPass = std::make_unique<TileCrosshairRenderPass>(m_activeTilesRecord.get());
+
+    m_bboxDisplayPass = std::make_unique<BBoxRenderPass>();
+    m_bboxDisplayPass->disable();
     
+    /* Define the Order to Render Each Pass */
     m_renderPasses.push_back(m_displayLayerPass.get());
+    m_renderPasses.push_back(m_bboxDisplayPass.get());
     m_renderPasses.push_back(m_tileCrosshairPass.get());
 
     /* Allocate Resources  */
@@ -99,7 +104,7 @@ void Window::renderWindow() {
     };
 
     for (auto pass : m_renderPasses) {
-        pass->render(context);
+        pass->process(context);
     }
 
     SDL_GL_SwapWindow(m_window);

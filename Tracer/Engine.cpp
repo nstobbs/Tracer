@@ -26,7 +26,7 @@ void Engine::SetScene(Scene* scene) {
 
 void Engine::SetCamera(Camera* camera) {
     m_version++;
-    m_prevCameraVersion = camera->GetCameraVersion();
+    m_lastCameraVersion = camera->GetVersion();
     m_camera = camera;
 }
 
@@ -54,6 +54,7 @@ void Engine::SetTargetLayer(const std::string& layer) {
 }
 
 void Engine::SetActiveTilesRecord(ActiveTilesRecord* activeList) {
+    m_version++;
     m_activeList = activeList;
     m_activeList->tileSize = m_tileSize;
 }
@@ -66,15 +67,20 @@ void Engine::StopRendering() {
     m_isRunning = false;
 }
 
+bool Engine::hasVersionChanged() {
+    if (m_version == m_lastVersion && m_lastCameraVersion == m_camera->GetVersion()) {
+        return false;
+    } 
+
+    m_lastVersion = m_version;
+    m_lastCameraVersion = m_camera->GetVersion();
+    return true;
+}
 
 void Engine::Tick() {
-    if (m_isRunning) {
-        if (m_version != m_prevVersion || m_prevCameraVersion != m_camera->GetCameraVersion()) { // TODO: Clean this up.
-            m_prevVersion = m_version;
-            m_prevCameraVersion = m_camera->GetCameraVersion();
-            m_tasker->SetTileOrder(TileOrder::eCenterOut);
-            m_tasker->SubmitFrameToPool();
-        }
+    if (m_isRunning && hasVersionChanged()) {
+        m_tasker->SetTileOrder(TileOrder::eCenterOut);
+        m_tasker->SubmitFrameToPool();
     }
 }
 
@@ -121,7 +127,6 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         return;
     }
 
-    /* Prep Scene, Viewport */
     auto color = m_missedColor;
     // FIXME: Pre adjusting before sample div later.
     color.x *= m_samplesPerPixel;

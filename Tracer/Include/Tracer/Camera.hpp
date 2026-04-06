@@ -29,12 +29,13 @@ public:
 
     f32 GetFocalLength() const {return m_focalLength;}; 
     void Transform(f32 delta, CameraDirection direction);
-    u64 GetCameraVersion() const { return m_version; };
+    u64 GetVersion() const { return m_version; };
 
-    Vector3 UpVector() const {return m_Up;};
+    inline constexpr Vector3 UpVector() const {return m_Up;};
     Vector3 RightVector(Vector3 direction) const;
     Vector3 ForwardVector() const;
     Vector3 Rotate(Vector3 direction) const;
+    inline constexpr Point3 Position() const { return m_position; }
 
     Ray GetRay(const Image& image, u32 x, u32 y);
 

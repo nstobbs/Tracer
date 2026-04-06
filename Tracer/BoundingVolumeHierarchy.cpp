@@ -6,7 +6,6 @@
 #include <algorithm>
 
 namespace {
-        const Tracer::u32 kMaxNodes = 128;
         void printNodeInfo(Tracer::BVH::MeshNode node, Tracer::i32 index) {
             std::printf("Node %I32i, Triangle Count: %i\n", index, node.indices.size() / 3);
             std::printf("leftIndex: %I32i, rightIndex: %I32i\n", node.leftIndex, node.rightIndex);
@@ -99,45 +98,53 @@ void MeshContainer::BuildBVH() {
     BBox rootBBox = m_pMesh->GetBBox();
     auto& rootVertices = m_pMesh->GetVertices();
     auto rootIndices = m_pMesh->GetIndices();
-    m_nodes.reserve(kMaxNodes+1);  
     m_nodes.push_back(MeshNode{
         .bbox = rootBBox,
         .leftIndex = -1,
         .rightIndex = -1,
         .indices = rootIndices});
 
-    auto buildTree = [&](auto& self, MeshNode& node) {
-        u32 nodeTriangleCount = node.indices.size() / 3;
-        if (nodeTriangleCount <= m_trianglesPerNode ){//|| m_nodes.size() >= kMaxNodes) {
+    auto buildTree = [&](auto& self, u32 nodeIndex) {
+        u32 nodeTriangleCount = m_nodes[nodeIndex].indices.size() / 3;
+        if (nodeTriangleCount <= m_trianglesPerNode ){
             return;
         }
-        auto result = splitNode(node);
+        auto result = splitNode(m_nodes[nodeIndex]);
         if (result.first.indices.empty()) {
-            node = result.second;
+            m_nodes[nodeIndex] = result.second;
             return;
         } else if (result.second.indices.empty()) {
-            node = result.first;
+            m_nodes[nodeIndex] = result.first;
             return;
         }
 
-        u32 currentIndex = &node - m_nodes.data();
-
-        m_nodes.at(currentIndex).leftIndex = m_nodes.size();
+        m_nodes[nodeIndex].leftIndex = m_nodes.size();
         m_nodes.push_back(result.first);
-        //printNodeInfo(m_nodes.at(node.leftIndex), node.leftIndex);
-        self(self, m_nodes.at(m_nodes.at(currentIndex).leftIndex));
 
-        m_nodes.at(currentIndex).rightIndex = m_nodes.size();
+        m_nodes[nodeIndex].rightIndex = m_nodes.size();
         m_nodes.push_back(result.second);
-        //printNodeInfo(m_nodes.at(m_nodes.at(currentIndex).rightIndex), m_nodes.at(currentIndex).rightIndex);
-        self(self, m_nodes.at(m_nodes.at(currentIndex).rightIndex));
+        
+        self(self, m_nodes[nodeIndex].leftIndex);
+        self(self, m_nodes[nodeIndex].rightIndex);
     };
 
     std::printf("Starting BVH Tree Build...\n");
-    buildTree(buildTree, m_nodes.front());
+    buildTree(buildTree, 0);
 
     std::printf("BVH Node Count: %i\n", static_cast<i32>(m_nodes.size()));
     std::printf("Finished Building BVH.\n");
+
+#if 1
+    std::printf("Outputing: Final Node and Triangle Count Per Node\n");
+    i32 nodeCountWithIndices = 0;
+    for (auto node : m_nodes) {
+        if (!node.indices.empty()) {
+            nodeCountWithIndices++;
+        std::printf("Node %i, Triangle Count: %i\n", nodeCountWithIndices, node.indices.size() / 3);
+        }
+    }
+#endif
+
 };
 
 std::vector<MeshNode> MeshContainer::FindAllHitNodes(const Ray& ray) const {
@@ -164,7 +171,6 @@ std::vector<MeshNode> MeshContainer::FindAllHitNodes(const Ray& ray) const {
     if (m_nodes.front().bbox.isHit(ray)) {
         findNodes(findNodes, ray, m_nodes.front());
     }
-    std::reverse(results.begin(), results.end());
     return results;
 }
 
