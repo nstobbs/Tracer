@@ -9,8 +9,8 @@ namespace {
     const int kHeight = 720;
     const bool kHalfRes = true;
 
-    const Tracer::f32 kCameraSensitivity = 0.5f; /* Pan and Tilt Speed */
-    const Tracer::f32 kCameraSpeed = 1.0f; /* Moving Position Speed */
+    const Tracer::f32 kCameraSensitivity = 0.25f; /* Pan and Tilt Speed */
+    const Tracer::f32 kCameraSpeed = 0.5f; /* Moving Position Speed */
 
     constexpr int kWindowWidth = kHalfRes ? kWidth / 2 : kWidth;
     constexpr int kWindowHeight = kHalfRes ? kHeight / 2 : kHeight;

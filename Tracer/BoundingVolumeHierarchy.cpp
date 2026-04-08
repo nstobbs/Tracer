@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <map>
 
 namespace {
         void printNodeInfo(Tracer::BVH::MeshNode node, Tracer::i32 index) {
@@ -15,6 +16,45 @@ namespace {
 namespace Tracer {
 
     namespace BVH {
+
+std::array<u32, 3> MeshContainer::axisLengthOrder(BBox bbox) {
+    /* Creates a Map of Axises and the Extent of that axis.
+    Sorted in the order of largest extent first.      */
+    Point3 extents = bbox.Max() - bbox.Min();
+    std::multimap<f32, u32, std::greater<f32>> extentAxisMap{};
+    for (u32 i = 0; i < 3; i++) {
+        if (i == 0) {
+            extentAxisMap.emplace(extents.x, i);
+        } else if (i == 1) {
+            extentAxisMap.emplace(extents.y, i);
+        } else if (i == 2) {
+            extentAxisMap.emplace(extents.z, i);
+        }
+    }
+
+    std::array<u32, 3> output{};
+    u32 index = 0;
+    for (auto& [extent, axis] : extentAxisMap) {
+        output[index] = axis;
+        index++;
+    }
+
+    return output;
+};
+
+BBox MeshContainer::splitBBoxOnAxis(BBox& bbox, u32 axis) {
+    BBox halfBBox(bbox.Min(), bbox.Max());
+    Point3 max = halfBBox.Max();
+    if (axis == 0) {
+        max.x = (bbox.Min().x + bbox.Max().x) / 2.0f;
+    } else if (axis == 1) {
+        max.y = (bbox.Min().y + bbox.Max().y) / 2.0f;
+    } else if (axis == 2) {
+        max.y = (bbox.Min().z + bbox.Max().z) / 2.0f;
+    }
+    halfBBox.SetMax(max);
+    return halfBBox;
+};
 
 std::pair<BBox, BBox> MeshContainer::splitBBox(BBox& bbox) {
     BBox a;
@@ -87,10 +127,25 @@ void MeshContainer::transferIndicesToChildNodes(BBox anchorPoint, MeshNode& from
 }
 
 std::pair<MeshNode, MeshNode> MeshContainer::splitNode(MeshNode& node) {
-    auto resultBBoxs = splitBBox(node.bbox);
+    auto axisPrioOrder = axisLengthOrder(node.bbox);
     MeshNode nodeA{}; MeshNode nodeB{};
-    transferIndicesToChildNodes(resultBBoxs.first, node, nodeA, nodeB);
-    return std::pair<MeshNode, MeshNode>(nodeA, nodeB);
+    u32 attempts = 0;
+    for (auto& axis : axisPrioOrder) {
+        attempts++;
+        auto anchorPoint = splitBBoxOnAxis(node.bbox, axis);
+        transferIndicesToChildNodes(anchorPoint, node, nodeA, nodeB);
+        if (nodeA.indices.empty() && attempts < 3) {
+            /* Copy the indices back and try again on a different axis */
+            node.indices = nodeB.indices; 
+            continue;
+        } else if (nodeB.indices.empty() && attempts < 3) {
+            /* Copy the indices back and try again on a different axis */
+            node.indices = nodeA.indices; 
+            continue;
+        }
+        return std::pair<MeshNode, MeshNode>(nodeA, nodeB); /* No issues */
+    }
+    return std::pair<MeshNode, MeshNode>(nodeA, nodeB); /* Might be an issue */
 }
 
 void MeshContainer::BuildBVH() {
@@ -109,13 +164,13 @@ void MeshContainer::BuildBVH() {
         if (nodeTriangleCount <= m_trianglesPerNode ){
             return;
         }
+
         auto result = splitNode(m_nodes[nodeIndex]);
+
         if (result.first.indices.empty()) {
             m_nodes[nodeIndex] = result.second;
-            return;
         } else if (result.second.indices.empty()) {
             m_nodes[nodeIndex] = result.first;
-            return;
         }
 
         m_nodes[nodeIndex].leftIndex = m_nodes.size();
@@ -131,8 +186,7 @@ void MeshContainer::BuildBVH() {
     std::printf("Starting BVH Tree Build...\n");
     buildTree(buildTree, 0);
 
-    std::printf("BVH Node Count: %i\n", static_cast<i32>(m_nodes.size()));
-    std::printf("Finished Building BVH.\n");
+    std::printf("Final BVH Node Count: %i\n", static_cast<i32>(m_nodes.size()));
 
 #if 1
     std::printf("Outputing: Final Node and Triangle Count Per Node\n");
