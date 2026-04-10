@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <map>
 
+#define DEBUG_PRINT 1
+
 namespace {
         void printNodeInfo(Tracer::BVH::MeshNode node, Tracer::i32 index) {
             std::printf("Node %I32i, Triangle Count: %i\n", index, node.indices.size() / 3);
@@ -54,40 +56,6 @@ BBox MeshContainer::splitBBoxOnAxis(BBox& bbox, u32 axis) {
     }
     halfBBox.SetMax(max);
     return halfBBox;
-};
-
-std::pair<BBox, BBox> MeshContainer::splitBBox(BBox& bbox) {
-    BBox a;
-    BBox b;
-
-    a.SetMax(bbox.Max());
-    a.SetMin(bbox.Min());
-
-    b.SetMax(bbox.Max());
-    b.SetMin(bbox.Min());
-
-    f32 mid = 0.0f;
-    Point3 aMax = a.Max();
-    Point3 bMin = b.Min();
-
-    Point3 extents = bbox.Max() - bbox.Min();
-    if (extents.x >= extents.y && extents.x >= extents.z) {
-        mid = (bbox.Min().x + bbox.Max().x) / 2.0f;
-        aMax.x = mid;
-        bMin.x = mid;
-    } else if (extents.y >= extents.z) {
-        mid = (bbox.Min().y + bbox.Max().y) / 2.0f;
-        aMax.y = mid;
-        bMin.y = mid;
-    } else {
-        mid = (bbox.Min().z + bbox.Max().z) / 2.0f;
-        aMax.z = mid;
-        bMin.z = mid;
-    }
-
-    a.SetMax(aMax);
-    b.SetMin(bMin);
-    return std::pair<BBox, BBox>(a, b);
 }
 
 void MeshContainer::transferIndicesToChildNodes(BBox anchorPoint, MeshNode& from, MeshNode& toA, MeshNode& toB) {
@@ -136,11 +104,17 @@ std::pair<MeshNode, MeshNode> MeshContainer::splitNode(MeshNode& node) {
         transferIndicesToChildNodes(anchorPoint, node, nodeA, nodeB);
         if (nodeA.indices.empty() && attempts < 3) {
             /* Copy the indices back and try again on a different axis */
-            node.indices = nodeB.indices; 
+            node.indices = nodeB.indices;
+            node.bbox = nodeB.bbox;
+            axisPrioOrder = axisLengthOrder(node.bbox);
+            attempts = 0;
             continue;
         } else if (nodeB.indices.empty() && attempts < 3) {
             /* Copy the indices back and try again on a different axis */
-            node.indices = nodeA.indices; 
+            node.indices = nodeA.indices;
+            node.bbox = nodeB.bbox;
+            axisPrioOrder = axisLengthOrder(node.bbox);
+            attempts = 0;
             continue;
         }
         return std::pair<MeshNode, MeshNode>(nodeA, nodeB); /* No issues */
@@ -159,20 +133,29 @@ void MeshContainer::BuildBVH() {
         .rightIndex = -1,
         .indices = rootIndices});
 
+
+    i32 depthCount = 0;
+
     auto buildTree = [&](auto& self, u32 nodeIndex) {
         u32 nodeTriangleCount = m_nodes[nodeIndex].indices.size() / 3;
-        if (nodeTriangleCount <= m_trianglesPerNode ){
+        if (nodeTriangleCount <= m_trianglesPerNode){
             return;
         }
+        depthCount++;
+
+/* Debug Print for Checking the Spilt In-Progress*/
+#if DEBUG_PRINT
+        i32 indicesCount = m_nodes[nodeIndex].indices.size();
+        std::printf("Depth: %i | Indices Count: %i\n", depthCount, indicesCount);
+#endif
 
         auto result = splitNode(m_nodes[nodeIndex]);
 
-        if (result.first.indices.empty()) {
-            m_nodes[nodeIndex] = result.second;
-        } else if (result.second.indices.empty()) {
-            m_nodes[nodeIndex] = result.first;
-        }
-
+        //if (result.first.indices.empty()) {
+        //    m_nodes[nodeIndex] = result.second;
+        //} else if (result.second.indices.empty()) {
+        //    m_nodes[nodeIndex] = result.first;
+        //}
         m_nodes[nodeIndex].leftIndex = m_nodes.size();
         m_nodes.push_back(result.first);
 
@@ -181,6 +164,7 @@ void MeshContainer::BuildBVH() {
         
         self(self, m_nodes[nodeIndex].leftIndex);
         self(self, m_nodes[nodeIndex].rightIndex);
+        depthCount--;
     };
 
     std::printf("Starting BVH Tree Build...\n");
@@ -188,7 +172,7 @@ void MeshContainer::BuildBVH() {
 
     std::printf("Final BVH Node Count: %i\n", static_cast<i32>(m_nodes.size()));
 
-#if 1
+#if DEBUG_PRINT
     std::printf("Outputing: Final Node and Triangle Count Per Node\n");
     i32 nodeCountWithIndices = 0;
     for (auto node : m_nodes) {
