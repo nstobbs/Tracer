@@ -1,6 +1,8 @@
 #pragma once
-#include "Tracer/BoundingBox.hpp"
-#include "Tracer/Surface.hpp"
+#include "Object/BoundingBox.hpp"
+
+#include "Surface/Surface.hpp"
+
 #include "Tracer/Ray.hpp"
 #include "Tracer/Interval.hpp"
 #include "Tracer/Camera.hpp"

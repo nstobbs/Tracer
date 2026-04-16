@@ -1,5 +1,5 @@
 #include "Window/BBoxRenderPass.hpp"
-#include "Tracer/Mesh.hpp"
+#include "Object/Mesh.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>

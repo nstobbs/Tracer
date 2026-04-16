@@ -3,7 +3,7 @@
 #include "Window/RenderPass.hpp"
 #include "Window/OpenGlHelper.hpp"
 
-#include "Tracer/BoundingBox.hpp"
+#include "Object/BoundingBox.hpp"
 #include "Tracer/Scene.hpp"
 
 #include <array>

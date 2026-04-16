@@ -2,8 +2,9 @@
 
 #include "Window/Window.hpp"
 
+#include "Engine/Engine.hpp"
+
 #include "Tracer/Camera.hpp"
-#include "Tracer/Engine.hpp"
 #include "Tracer/Image.hpp"
 #include "Tracer/Types.hpp"
 

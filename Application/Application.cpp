@@ -1,5 +1,6 @@
 #include "Application/Application.hpp"
-#include "Tracer/Mesh.hpp"
+
+#include "Object/Mesh.hpp"
 
 #include <iostream>
 #include <cstdlib>

@@ -1,4 +1,4 @@
-#include "Tracer/Mesh.hpp"
+#include "Object/Mesh.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>

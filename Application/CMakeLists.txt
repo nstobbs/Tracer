@@ -15,6 +15,7 @@ target_include_directories(Application PUBLIC
 
 target_link_libraries(Application PUBLIC
     Tracer
+    Object
     SDL2::SDL2
     SDL2::SDL2main
     SDL2_image::SDL2_image
