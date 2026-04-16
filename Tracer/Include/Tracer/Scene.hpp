@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Tracer/Object.hpp"
-#include "Tracer/Surface.hpp"
+#include "Object/Object.hpp"
+#include "Surface/Surface.hpp"
 
 #include <vector>
 

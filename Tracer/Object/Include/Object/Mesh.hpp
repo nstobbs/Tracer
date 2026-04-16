@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Tracer/Object.hpp"
-#include "Tracer/Vertex.hpp"
-#include "Tracer/BoundingVolumeHierarchy.hpp"
+#include "Object/Object.hpp"
+#include "Object/Vertex.hpp"
+#include "Object/BoundingVolumeHierarchy.hpp"
 
 #include <vector>
 #include <string>

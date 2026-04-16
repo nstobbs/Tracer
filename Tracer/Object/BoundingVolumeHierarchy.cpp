@@ -1,5 +1,5 @@
-#include "Tracer/BoundingVolumeHierarchy.hpp"
-#include "Tracer/Mesh.hpp"
+#include "Object/BoundingVolumeHierarchy.hpp"
+#include "Object/Mesh.hpp"
 #include "Tracer/Interval.hpp"
 
 #include <iostream>

@@ -1,5 +1,6 @@
 #pragma once
-#include "Tracer/BoundingBox.hpp"
+#include "Object/BoundingBox.hpp"
+
 #include "Tracer/Ray.hpp"
 #include "Tracer/Scene.hpp"
 

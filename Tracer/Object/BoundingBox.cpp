@@ -1,4 +1,4 @@
-#include "Tracer/BoundingBox.hpp"
+#include "Object/BoundingBox.hpp"
 #include "Tracer/Interval.hpp"
 
 #include <algorithm>

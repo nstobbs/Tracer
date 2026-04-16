@@ -1,4 +1,4 @@
-#include "Tracer/Vertex.hpp"
+#include "Object/Vertex.hpp"
 
 namespace Tracer {
 //FIXME: This can be removed
