@@ -43,12 +43,15 @@ private:
     BBox splitBBoxOnAxis(BBox& bbox, u32 axis);
     /* Moves Indices into two different MeshNode based if the centroid is within or outside of the given BBox. */
     void transferIndicesToChildNodes(BBox anchorPoint, MeshNode& from, MeshNode& toA, MeshNode& toB);
+    /* Creates a new bbox based of the Centroid of all of the Triangles within a given MeshNode */
+    BBox calculateCentroidBBox(MeshNode& node);
     
 
     Mesh* m_pMesh = {nullptr};
     u64 m_version = {0};
     std::vector<MeshNode> m_nodes;
     u32 m_trianglesPerNode = {3};
+    i32 m_depthCount = {0};
 };
 
 };

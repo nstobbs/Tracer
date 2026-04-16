@@ -125,7 +125,7 @@ void BBoxRenderPass::cleanup() {
 }
 
 void BBoxRenderPass::setScene(Scene* scene) {
-    constexpr bool skipEmptyNodes = false; // FIXME Move this into the class header!
+    constexpr bool skipEmptyNodes = true; // FIXME Move this into the class header!
     m_scene = scene;
     m_bboxMatrices.clear();
     for (auto object : m_scene->GetObjects()) {
@@ -181,7 +181,7 @@ std::string BBoxRenderPass::fragmentSource() {
         out vec4 outColor;
 
         void main() {
-            outColor = vec4(1.0f, 1.0f, 1.0f, 0.1f);
+            outColor = vec4(1.0f, 1.0f, 1.0f, 0.01f);
         }
     )";
     return source;

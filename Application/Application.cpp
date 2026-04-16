@@ -89,7 +89,6 @@ Application::Application(ApplicationSettings settings) {
 
     Image testTexture = Image::ReadImage("./Textures/1K_Test_PNG_Texture.png", "RGBA");
     auto textureSurface = SurfaceShader::UVTexture(&testTexture, "RGBA");
-
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     auto solidSurface = SurfaceShader::SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
     auto geometricNormalSurface = SurfaceShader::GeometricNormals();
@@ -97,13 +96,11 @@ Application::Application(ApplicationSettings settings) {
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
                                                           static_cast<Surface*>(&surfaceNormalsSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
-
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Object*>(&mesh));
     }
-    
 #else
 
     //auto surface = SurfaceShader::SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
