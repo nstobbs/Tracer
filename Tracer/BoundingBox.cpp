@@ -13,7 +13,7 @@ void BBox::Expand(Point3 point) {
     m_max.x = std::max(point.x, m_max.x);
     m_max.y = std::max(point.y, m_max.y);
     m_max.z = std::max(point.z, m_max.z);
-};
+}
 
 bool BBox::isHit(const Ray& ray) const {
     Interval range;
@@ -36,7 +36,7 @@ bool BBox::isHit(const Ray& ray) const {
     tMax = std::min(tMax, std::max(zt1, zt2));
 
     return tMin < tMax;
-};
+}
 
 bool BBox::Contains(Point3 point) const {
     auto rangeX = Interval(static_cast<f32>(m_min.x), static_cast<f32>(m_max.x));
@@ -46,6 +46,6 @@ bool BBox::Contains(Point3 point) const {
     return rangeX.Contains(point.x) &&
            rangeY.Contains(point.y) &&
            rangeZ.Contains(point.z); 
-};
+}
 
 }

@@ -125,19 +125,22 @@ void BBoxRenderPass::cleanup() {
 }
 
 void BBoxRenderPass::setScene(Scene* scene) {
+    constexpr bool skipEmptyNodes = true; // FIXME Move this into the class header!
     m_scene = scene;
     m_bboxMatrices.clear();
     for (auto object : m_scene->GetObjects()) {
         auto nodes = static_cast<Mesh*>(object)->getMeshContainer()->AllNodes();
         for (auto node : nodes) {
-            //if (!node.indices.empty()) {
-                auto bbox = node.bbox;
-                Vector3 center = (bbox.Min() + bbox.Max()) * 0.5f;
-                Vector3 size = bbox.Max() - bbox.Min();
-                Matrix4 model = glm::translate(Matrix4(1.0f), center)
-                                * glm::scale(Matrix4(1.0f), size);
-                m_bboxMatrices.push_back(model);
-            //}
+            if (node.indices.empty() && skipEmptyNodes) {
+                continue;
+            }
+            
+            auto bbox = node.bbox;
+            Vector3 center = (bbox.Min() + bbox.Max()) * 0.5f;
+            Vector3 size = bbox.Max() - bbox.Min();
+            Matrix4 model = glm::translate(Matrix4(1.0f), center)
+                            * glm::scale(Matrix4(1.0f), size);
+            m_bboxMatrices.push_back(model);
         }
     }
 
@@ -178,7 +181,7 @@ std::string BBoxRenderPass::fragmentSource() {
         out vec4 outColor;
 
         void main() {
-            outColor = vec4(1.0f, 1.0f, 1.0f, 0.2f);
+            outColor = vec4(1.0f, 1.0f, 1.0f, 0.01f);
         }
     )";
     return source;

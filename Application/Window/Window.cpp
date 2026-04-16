@@ -56,8 +56,7 @@ Window::Window(i32 width, i32 height) : m_width(width), m_height(height) {
     m_tileCrosshairPass = std::make_unique<TileCrosshairRenderPass>(m_activeTilesRecord.get());
 
     m_bboxDisplayPass = std::make_unique<BBoxRenderPass>();
-    m_bboxDisplayPass->disable();
-    
+
     /* Define the Order to Render Each Pass */
     m_renderPasses.push_back(m_displayLayerPass.get());
     m_renderPasses.push_back(m_bboxDisplayPass.get());

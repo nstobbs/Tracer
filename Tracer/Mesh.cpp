@@ -260,7 +260,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
             }
             // Calculate TrianglesPerNode Based of Index Count and Node Max Limit
             auto targetSize = meshObject.m_indices.size() / 128; //FIXME: Get the Node Limit from the MeshContainer...
-            meshObject.m_container.SetTrianglesPerNode(2);
+            meshObject.m_container.SetTrianglesPerNode(3);
             meshObject.m_container.BuildBVH();
             outputScene.push_back(meshObject);
         }

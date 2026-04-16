@@ -9,8 +9,8 @@ namespace {
     const int kHeight = 720;
     const bool kHalfRes = true;
 
-    const Tracer::f32 kCameraSensitivity = 0.5f; /* Pan and Tilt Speed */
-    const Tracer::f32 kCameraSpeed = 1.0f; /* Moving Position Speed */
+    const Tracer::f32 kCameraSensitivity = 0.25f; /* Pan and Tilt Speed */
+    const Tracer::f32 kCameraSpeed = 0.5f; /* Moving Position Speed */
 
     constexpr int kWindowWidth = kHalfRes ? kWidth / 2 : kWidth;
     constexpr int kWindowHeight = kHalfRes ? kHeight / 2 : kHeight;
@@ -89,7 +89,6 @@ Application::Application(ApplicationSettings settings) {
 
     Image testTexture = Image::ReadImage("./Textures/1K_Test_PNG_Texture.png", "RGBA");
     auto textureSurface = SurfaceShader::UVTexture(&testTexture, "RGBA");
-
     auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     auto solidSurface = SurfaceShader::SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
     auto geometricNormalSurface = SurfaceShader::GeometricNormals();
@@ -97,13 +96,11 @@ Application::Application(ApplicationSettings settings) {
     auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
                                                           static_cast<Surface*>(&surfaceNormalsSurface),
                                                           SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
-
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);
         m_scene->AddObject(static_cast<Object*>(&mesh));
     }
-    
 #else
 
     //auto surface = SurfaceShader::SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
