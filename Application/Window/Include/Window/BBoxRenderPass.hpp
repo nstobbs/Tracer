@@ -12,10 +12,10 @@
 
 using namespace Tracer;
 
-struct BBoxHitHeatmapRecord {
-	std::unordered_map<Tracer::BBox, i32> heatmap;
-	std::mutex mutex;
-};
+//struct BBoxHitHeatmapRecord {
+//	std::unordered_map<Tracer::BBox, i32> heatmap;
+//	std::mutex mutex;
+//};
 
 enum class OverlayMode {
 	eInvalid = -1,

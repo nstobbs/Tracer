@@ -10,7 +10,7 @@ find_package(SDL2_image REQUIRED)
 find_package(GLEW REQUIRED)
 
 target_include_directories(Application PUBLIC 
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/Include
 )
 
 target_link_libraries(Application PUBLIC

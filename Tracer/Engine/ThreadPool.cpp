@@ -26,7 +26,7 @@ ThreadPool::ThreadPool(size_t numThreads) {
                 //std::printf("Executing Task...ThreadID: %i\n", threadID);
                 if(!task) {
                     std::printf("Empty Function was called!.. ThreadID: %i\n", threadID);
-                    __debugbreak();
+                    //__debugbreak(); FIXME: Create an CrossPlaform for Breaking within Threads!
                     return;
                 };
                 task();
