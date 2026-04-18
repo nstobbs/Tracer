@@ -1,0 +1,53 @@
+#include "Surface/Surface.hpp"
+#include "Tracer/Image.hpp"
+
+#include <algorithm>
+
+namespace Tracer {
+
+/* Display Image Texture */
+class UVTexture : public Surface {
+public:
+    UVTexture(Image* image, const std::string& layer) : m_image(image), m_layerName(layer) {}
+    Color4 CalculateColor(const HitInfo& info) override {
+       Color4 output(0.0f, 0.0f, 0.0f, 0.0f);
+        if (!m_image) {
+            return Color4(1.0f, 0.0f, 0.0f, 1.0f);
+        }
+
+        /* Get UVs from Geo */
+        f32 u, v;
+        if (info.type == ShapeType::eTriangle) {
+            u = (info.extra.triangle.v0.textureUV.x * static_cast<f32>(info.extra.triangle.u));
+            u += (info.extra.triangle.v1.textureUV.x * static_cast<f32>(info.extra.triangle.v));
+            u += (info.extra.triangle.v2.textureUV.x * static_cast<f32>(info.extra.triangle.w));
+            u = u / 3.0f;
+
+            v = (info.extra.triangle.v0.textureUV.y * static_cast<f32>(info.extra.triangle.u));
+            v += (info.extra.triangle.v1.textureUV.y * static_cast<f32>(info.extra.triangle.v));
+            v += (info.extra.triangle.v2.textureUV.y * static_cast<f32>(info.extra.triangle.w));
+            v = v / 3.0f;
+        }
+
+        u32 requestX = u * m_image->GetWidth();
+        u32 requestY = v * m_image->GetHeight();
+        if (requestX > m_image->GetWidth() || requestY > m_image->GetHeight()) {
+            return Color4(1.0f, 0.0f, 0.0f, 0.0f);
+        }
+
+        output = m_image->GetLayer(m_layerName)->GetRow(requestY).at(requestX);
+
+        /* Clamp */
+        output.r = std::clamp(output.r, 0.0f, 1.0f);
+        output.g = std::clamp(output.g, 0.0f, 1.0f);
+        output.b = std::clamp(output.b, 0.0f, 1.0f);
+        output.a = std::clamp(output.a, 0.0f, 1.0f);
+
+        return output; 
+    }
+private:
+    Image* m_image = {nullptr};
+    const std::string m_layerName;
+};
+
+}

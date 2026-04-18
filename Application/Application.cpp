@@ -2,6 +2,15 @@
 
 #include "Object/Mesh.hpp"
 
+//FIXME Remove Surfaces when we move to Materials Network
+#include "Surface/GeometricNormals.hpp"
+#include "Surface/MergeSurface.hpp"
+#include "Surface/SolidColor.hpp"
+#include "Surface/SurfaceNormals.hpp"
+#include "Surface/UVTexture.hpp"
+#include "Surface/VertexColor.hpp"
+#include "Surface/Wireframe.hpp"
+
 #include <iostream>
 #include <cstdlib>
 
@@ -89,14 +98,14 @@ Application::Application(ApplicationSettings settings) {
 #if 1
 
     Image testTexture = Image::ReadImage("./Textures/1K_Test_PNG_Texture.png", "RGBA");
-    auto textureSurface = SurfaceShader::UVTexture(&testTexture, "RGBA");
-    auto wireframeSurface = SurfaceShader::Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
-    auto solidSurface = SurfaceShader::SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
-    auto geometricNormalSurface = SurfaceShader::GeometricNormals();
-    auto surfaceNormalsSurface = SurfaceShader::SurfaceNormals();
-    auto surface = SurfaceShader::MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
+    auto textureSurface = UVTexture(&testTexture, "RGBA");
+    auto wireframeSurface = Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
+    auto solidSurface = SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
+    auto geometricNormalSurface = GeometricNormals();
+    auto surfaceNormalsSurface = SurfaceNormals();
+    auto surface = MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
                                                           static_cast<Surface*>(&surfaceNormalsSurface),
-                                                          SurfaceShader::MergeSurfaceShader::MergeOperation::Plus);
+                                                          MergeSurfaceShader::MergeOperation::Plus);
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
         mesh.SetSurface(&surface);

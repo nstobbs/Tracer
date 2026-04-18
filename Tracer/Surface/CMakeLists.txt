@@ -1,24 +1,11 @@
-add_library(Surface STATIC
-    Surface.cpp
-    GeometricNormals.cpp
-    MergeSurface.cpp
-    SolidColor.cpp
-    SurfaceNormals.cpp
-    UVTexture.cpp
-    VertexColor.cpp
-    Wireframe.cpp
+add_library(Surface INTERFACE
 )
 
-target_include_directories(Surface PUBLIC 
+target_include_directories(Surface INTERFACE 
         ${CMAKE_CURRENT_SOURCE_DIR}/Include
 )
 
-find_package(glm REQUIRED)
-find_package(assimp)
-
-target_link_libraries(Surface
-    glm::glm
-    assimp::assimp
+target_link_libraries(Surface INTERFACE
     stb
     Window
 )
