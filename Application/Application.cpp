@@ -133,7 +133,6 @@ Application::Application(ApplicationSettings settings) {
     m_window->setTarget(m_image->GetLayer(targetLayerName), m_camera.get());
     m_window->getBBoxDisplayHUD()->setScene(m_scene.get());
 
-
     /* Main Loop */
     SDL_Event event;
     while (!m_shutdown) {

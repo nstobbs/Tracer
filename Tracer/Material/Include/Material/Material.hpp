@@ -25,14 +25,14 @@ public:
         }
 
         HitInfo info{};
+        Color4 attenuation;
         for (auto object : scene->findHitObjects(ray)) {
             if (object->isHit(ray, info, Interval())) {
-                Color4 attenuation;
                 Ray scattered = scatterRay(ray, info, missColor, attenuation);
-                return attenuation * rayColor(scattered, rayDepth - 1, missColor, scene);
+                return (attenuation * rayColor(scattered, rayDepth - 1, missColor, scene));
             }
         }
-        return missColor;
+        return attenuation;
     }
 
     u64 getVersion() const { return m_version; }

@@ -155,7 +155,8 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
             };
         }
         if (frontObject) {
-            color += frontObject->getMaterial()->rayColor(ray, kMaxDepth, m_missedColor, m_scene);
+            auto materialOutput = frontObject->getMaterial()->rayColor(ray, kMaxDepth, m_missedColor, m_scene); 
+            color += materialOutput;
         }
     }
 
