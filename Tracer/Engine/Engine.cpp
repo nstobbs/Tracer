@@ -1,4 +1,6 @@
 #include "Engine/Engine.hpp"
+#include "Material/Material.hpp"
+
 #include <cmath>
 #include <chrono>
 
@@ -10,6 +12,7 @@ namespace Tracer {
 
 namespace {
     constexpr bool kSingleThreaded = false;
+    const u32 kMaxDepth = 4;
 }
 
 Engine::Engine() {
@@ -80,7 +83,7 @@ bool Engine::hasVersionChanged() {
 void Engine::Tick() {
     if (m_isRunning && hasVersionChanged()) {
         m_tasker->SetTileOrder(TileOrder::eCenterOut);
-        m_tasker->SubmitFrameToPool();
+        m_tasker->requestFrame();
     }
 }
 
@@ -133,26 +136,26 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
     color.y *= m_samplesPerPixel;
     color.z *= m_samplesPerPixel;
 
-    auto scene = m_scene->GetObjects();
-
     /* Render Per Samples */
     for (i32 sample = 0; sample < m_samplesPerPixel; sample++) {
-        /* Ray Tracing Starts */
+        /* Get Ray */
         Ray ray = m_camera->GetRay(*m_image, x, y);
         HitInfo info{};
 
-        Object* closeObj = nullptr;
-        f32 closeDistance = Interval().Max();
-        for (auto& object : scene) {
-            if (object->isHit(ray, info, Interval(), *m_camera)) {
-                if (info.distance < closeDistance) {
-                    closeObj = object;
-                    closeDistance = info.distance;
+        /* Depth Testing */
+        Object* frontObject = nullptr;
+        f32 distanceToObject = Interval().Max();
+
+        for (auto object : m_scene->findHitObjects(ray)) {
+            if (object->isHit(ray, info, Interval())) {
+                if (info.distance < distanceToObject) {
+                    frontObject = object;
+                    distanceToObject = info.distance;
                 }
             };
         }
-        if (closeObj) {
-            color += closeObj->GetSurface()->CalculateColor(info);
+        if (frontObject) {
+            color += frontObject->getMaterial()->rayColor(ray, kMaxDepth, m_missedColor, m_scene);
         }
     }
 

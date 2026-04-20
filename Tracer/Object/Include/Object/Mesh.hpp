@@ -18,7 +18,7 @@ public:
     static std::vector<Mesh> ReadFile(const std::string& filepath); /* Create meshes from File */
     static Mesh TriangleMesh(); /* Create an Single Triangle */
 
-    bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) override;
+    bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) override;
     const std::vector<Vertex>& GetVertices() const { return m_vertices; }
     const std::vector<u64>& GetIndices() const { return m_indices; }
 

@@ -37,8 +37,8 @@ public:
 
     void SetTileOrder(TileOrder order);
 
-    void SubmitFrameToPool();
-    void SubmitFrameToPool(TileOrder override);
+    void requestFrame();
+    void requestFrame(TileOrder override);
 
 private:
     std::queue<TileTask> createTilesQueue();

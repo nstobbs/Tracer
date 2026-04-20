@@ -73,7 +73,7 @@ std::queue<TileTask> Tasker::createTilesQueue() {
     return tileQueue;
 };
 
-void Tasker::SubmitFrameToPool() {
+void Tasker::requestFrame() {
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_tasks.emplace([this]{
@@ -84,7 +84,7 @@ void Tasker::SubmitFrameToPool() {
     m_cv.notify_one();
 };
 
-void Tasker::SubmitFrameToPool(TileOrder override) {
+void Tasker::requestFrame(TileOrder override) {
 
 };
 

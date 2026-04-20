@@ -17,7 +17,7 @@ Mesh::Mesh() {
     m_container = BVH::MeshContainer(this);
 }
 
-bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval, Camera camera) {
+bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
     /* Per Each Triangle Of this Mesh */
     u64 indexCount = m_indices.size();
     //assert(indexCount % 3 == 0);

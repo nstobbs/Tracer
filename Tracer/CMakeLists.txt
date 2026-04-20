@@ -7,6 +7,7 @@ add_library(Tracer STATIC
 add_subdirectory(Object)
 add_subdirectory(Engine)
 add_subdirectory(Surface)
+add_subdirectory(Material)
 
 target_include_directories(Tracer PUBLIC 
         ${CMAKE_CURRENT_SOURCE_DIR}/Include
@@ -19,6 +20,7 @@ target_link_libraries(Tracer
     Object
     Engine
     Surface
+    Material
     glm::glm
     assimp::assimp
     stb

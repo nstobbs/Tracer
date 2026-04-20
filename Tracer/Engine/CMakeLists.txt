@@ -13,7 +13,6 @@ find_package(assimp)
 
 target_link_libraries(Engine
     glm::glm
-    assimp::assimp
-    stb
     Window
+    Material
 )

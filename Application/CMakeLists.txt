@@ -18,6 +18,7 @@ target_link_libraries(Application PUBLIC
     Tracer
     Object
     Surface
+    Material
     Window
 # Conan Libraries
     SDL2::SDL2

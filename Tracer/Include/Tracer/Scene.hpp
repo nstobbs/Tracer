@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Object/Object.hpp"
-#include "Surface/Surface.hpp"
+#include "Tracer/Light.hpp"
 
 #include <vector>
 
@@ -12,14 +12,23 @@ public:
     Scene() = default;
     ~Scene() = default;
 
-    void AddObject(Object* object);
-    void AddObjects(std::vector<Object*> objects);
-    void AddSurface(Surface* surface);
-    std::vector<Object*>& GetObjects() { return m_objects; };
-    std::vector<Surface*>& GetSurfaces() { return m_surfaces; };
+    void addObject(Object* object);
+    void addObjects(std::vector<Object*> objects);
 
-private:
+    /* Unused */
+    void addLight(Light* light);
+    void addLights(std::vector<Light*>);
+
+    std::vector<Object*>& getObjects() { return m_objects; }
+    std::vector<Light*>& getLights() { return m_lights; }
+    u64 getVersion() const { return m_version; }
+
+    std::vector<Object*> findHitObjects(const Ray& ray);/* Returns all Objects that BBox intersect with the incoming ray.*/
+
+protected:
+    u64 m_version = {0};
+
     std::vector<Object*> m_objects;
-    std::vector<Surface*> m_surfaces;
+    std::vector<Light*> m_lights;
 };
 };

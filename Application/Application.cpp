@@ -1,15 +1,7 @@
 #include "Application/Application.hpp"
 
 #include "Object/Mesh.hpp"
-
-//FIXME Remove Surfaces when we move to Materials Network
-#include "Surface/GeometricNormals.hpp"
-#include "Surface/MergeSurface.hpp"
-#include "Surface/SolidColor.hpp"
-#include "Surface/SurfaceNormals.hpp"
-#include "Surface/UVTexture.hpp"
-#include "Surface/VertexColor.hpp"
-#include "Surface/Wireframe.hpp"
+#include "Material/Material.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -97,48 +89,48 @@ Application::Application(ApplicationSettings settings) {
 
 #if 1
 
-    Image testTexture = Image::ReadImage("./Textures/1K_Test_PNG_Texture.png", "RGBA");
-    auto textureSurface = UVTexture(&testTexture, "RGBA");
-    auto wireframeSurface = Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
-    auto solidSurface = SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
-    auto geometricNormalSurface = GeometricNormals();
-    auto surfaceNormalsSurface = SurfaceNormals();
-    auto surface = MergeSurfaceShader(static_cast<Surface*>(&wireframeSurface), 
-                                                          static_cast<Surface*>(&surfaceNormalsSurface),
-                                                          MergeSurfaceShader::MergeOperation::Plus);
+    //auto texture = Image::ReadImage("./Textures/1K_Test_PNG_Texture.png", "RGBA");
+    //auto textureSurface = UVTexture(&texture, "RGBA");
+    //auto wireframeSurface = Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
+    //auto solidSurface = SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
+    //auto geometricNormalSurface = GeometricNormals();
+    //auto surfaceNormalsSurface = SurfaceNormals();
+    //auto surface = MergeSurfaces(static_cast<Surface*>(&wireframeSurface), 
+    //                             static_cast<Surface*>(&surfaceNormalsSurface),
+    //                             MergeOperation::Plus);
+
+    Diffuse diffuseMaterial(Color4(0.5f, 0.5f, 0.5f, 1.0f));
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
-        mesh.SetSurface(&surface);
-        m_scene->AddObject(static_cast<Object*>(&mesh));
+        mesh.setMaterial(static_cast<Material*>(&diffuseMaterial));
+        m_scene->addObject(static_cast<Object*>(&mesh));
     }
+
 #else
 
-    //auto surface = SurfaceShader::SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
-    auto surface = SurfaceShader::VertexColor();
+    //auto surface = SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
+    auto surface = VertexColor();
     auto mesh = Mesh::TriangleMesh();
     mesh.SetSurface(&surface);
     m_scene->AddObject(static_cast<Object*>(&mesh));
 
 #endif
 
-    m_scene->AddSurface(&surface);
     m_engine->SetScene(m_scene.get());
     m_engine->SetCamera(m_camera.get());
     
     /* Image Layer Setup */
-    std::string renderLayer = "Color";
-
+    std::string targetLayerName = "Color";
     m_image = std::make_unique<Image>(settings.width(), settings.height());
-    m_image->CreateLayer(renderLayer);
-    //m_image->GetLayer(renderLayer)->DrawTestPatten(TestPatten::eChecker);
+    m_image->CreateLayer(targetLayerName);
     
     m_engine->SetImage(m_image.get());
-    m_engine->SetTargetLayer(renderLayer);
+    m_engine->SetTargetLayer(targetLayerName);
     m_engine->SetSamplesPerPixel(settings.sampleCount());
     m_engine->SetTileSize(settings.tileSize());
     m_engine->StartRendering();
 
-    m_window->setTarget(m_image->GetLayer(renderLayer), m_camera.get());
+    m_window->setTarget(m_image->GetLayer(targetLayerName), m_camera.get());
     m_window->getBBoxDisplayHUD()->setScene(m_scene.get());
 
 

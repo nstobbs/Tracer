@@ -2,18 +2,24 @@
 
 namespace Tracer {
 
-void Scene::AddObject(Object* object) {
+void Scene::addObject(Object* object) {
     m_objects.push_back(object);
 };
 
-void Scene::AddObjects(std::vector<Object*> objects) {
+void Scene::addObjects(std::vector<Object*> objects) {
     for (auto object : objects) {
         m_objects.push_back(object);
     }
 };
 
-void Scene::AddSurface(Surface* surface) {
-    m_surfaces.push_back(surface);
-};
+std::vector<Object*> Scene::findHitObjects(const Ray& ray) {
+    std::vector<Object*> found;
+    for (auto& object : m_objects) {
+        if (object->getBBox().isHit(ray)) {
+            found.push_back(object);
+        }
+    }
+    return found;
+}
 
 }
