@@ -1,4 +1,4 @@
-#include "Tracer/Camera.hpp"
+#include "Core/Camera.hpp"
 #include "glm/ext/matrix_transform.hpp"
 
 #include <algorithm>

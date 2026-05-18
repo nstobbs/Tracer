@@ -3,11 +3,11 @@
 #include "Engine/ThreadPool.hpp"
 #include "Engine/Tasker.hpp"
 
-#include "Tracer/Image.hpp"
-#include "Tracer/Camera.hpp"
-#include "Tracer/Scene.hpp"
-#include "Tracer/Ray.hpp"
-#include "Tracer/Interval.hpp"
+#include "Core/Image.hpp"
+#include "Core/Camera.hpp"
+#include "Core/Scene.hpp"
+#include "Core/Ray.hpp"
+#include "Core/Interval.hpp"
 
 #include "Window/TileCrosshairRenderPass.hpp"
 
@@ -31,9 +31,16 @@ public:
     void SetImage(Image* image);
     void SetSamplesPerPixel(u32 numOfSamples);
     void SetTileSize(u32 size);
+    void SetMaxRayDepth(u32 depth);
     void SetTargetLayer(const std::string& layer);
-    void SetMissedColor(Color4 color) { m_missedColor = color; };
+    void SetMissedColor(Color4 color);
     void SetActiveTilesRecord(ActiveTilesRecord* activeList);
+
+    u32 getSamplesPerPixel() const { return m_samplesPerPixel; }
+    u32 getTileSize() const { return m_tileSize; }
+    u32 getMaxRayDepth() const { return m_maxRayDepth; }
+    Color4 getMissedColor() const { return m_missedColor; }
+    f32 getRenderProgress() const { return m_pool->progress(); }
 
     Image* GetTargetImage() { return m_image; }
 
@@ -46,6 +53,7 @@ private:
     void RenderTile(u32 x, u32 y);
 
     bool hasVersionChanged(); /* Returns true if the engine or camera version has changed */
+    void updateLastVerion(); /* Updates the Last Versions with the Currect Versions */ 
     Layer* GetTargetLayer() const { return m_image->GetLayer(m_targetLayer); }
     Color4 GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const;
     void CalculatePixelColor(u32 x, u32 y) const;
@@ -53,8 +61,9 @@ private:
 
     u32 m_samplesPerPixel = {1};
     u32 m_tileSize = {32};
+    u32 m_maxRayDepth = {4};
 
-    Color4 m_missedColor = {0.0f, 0.0f, 0.0f, 0.0f};
+    Color4 m_missedColor = {0.0f, 0.0f, 0.0f, 1.0f};
 
     bool m_isRunning = {false};
 

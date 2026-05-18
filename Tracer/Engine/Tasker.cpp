@@ -1,6 +1,8 @@
 #include "Engine/Tasker.hpp"
 #include "Engine/Engine.hpp"
 
+#include "Core/StatusMessage.hpp"
+
 #include <map>
 
 namespace Tracer {
@@ -126,6 +128,7 @@ void Tasker::execute() {
     m_submittingFrame = true;
     std::queue<TileTask> tasks = createTilesQueue();
     tasks = sortTiles(tasks, m_tileOrder);
+    m_engine->m_pool->setStartingQueueSize(static_cast<u32>(tasks.size()));
     while (!tasks.empty()) {
         m_engine->m_pool->sumbitTask(std::move(tasks.front().task));
         tasks.pop();

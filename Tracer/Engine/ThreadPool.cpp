@@ -3,6 +3,7 @@
 namespace Tracer {
 
 ThreadPool::ThreadPool(size_t numThreads) {
+    m_renderingState = std::vector<std::atomic<bool>>(numThreads);
     for (i32 threadID = 0; threadID < numThreads; threadID++) {
         //std::printf("Createing Thread: %i\n", threadID);
         m_threads.emplace_back([this, threadID] {
@@ -29,11 +30,22 @@ ThreadPool::ThreadPool(size_t numThreads) {
                     //__debugbreak(); FIXME: Create an CrossPlaform for Breaking within Threads!
                     return;
                 };
+                m_renderingState.at(threadID).store(true);
                 task();
+                m_renderingState.at(threadID).store(false);
             }
         });
     }
 };
+
+bool ThreadPool::isRendering() const {
+    for (auto& threadState : m_renderingState) {
+        if (threadState.load() == true){
+            return true;
+        }
+    }
+    return false;
+}
 
 ThreadPool::~ThreadPool() {
     {
@@ -68,6 +80,21 @@ void ThreadPool::clearQueue() {
         }
     }
 };
+
+u32 ThreadPool::runningThreadCount() const {
+    u32 count = 0;
+    for (auto& threadState : m_renderingState) {
+        if(threadState.load() == true) {
+            count++;
+        }
+    }
+    return count;
+}
+
+f32 ThreadPool::progress() const {
+    auto inProgressCount = static_cast<f32>(m_tasks.size()) + static_cast<f32>(runningThreadCount());
+    return inProgressCount / static_cast<f32>(m_startingQueueSize); 
+}
 
 void ThreadPool::abortCurrent() {
 

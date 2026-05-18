@@ -1,5 +1,5 @@
 #pragma once
-#include "Tracer/Types.hpp"
+#include "Core/Types.hpp"
 
 #include <limits>
 

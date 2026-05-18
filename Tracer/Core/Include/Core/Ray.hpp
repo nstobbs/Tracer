@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Tracer/Types.hpp"
+#include "Core/Types.hpp"
 #include "Object/Vertex.hpp"
 
 namespace Tracer {
 
 struct Ray {
     Ray(Point3 orig, Vector3 dir) : origin(orig), direction(dir) { };
+    Ray() : origin(Point3(0.0f)), direction(Vector3(0.0f)) { };
     Point3 origin;
     Vector3 direction;
 };

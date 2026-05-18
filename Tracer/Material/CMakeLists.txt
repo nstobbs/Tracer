@@ -5,7 +5,9 @@ target_include_directories(Material INTERFACE
 )
 
 target_link_libraries(Material INTERFACE
-    Tracer
-    Object
-    Surface
+    Tracer::Core
+    Tracer::Object
+    Tracer::Surface
 )
+
+add_library(Tracer::Material ALIAS Material)

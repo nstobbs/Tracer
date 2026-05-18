@@ -1,8 +1,8 @@
 #pragma once
 #include "Object/BoundingBox.hpp"
 
-#include "Tracer/Ray.hpp"
-#include "Tracer/Scene.hpp"
+#include "Core/Ray.hpp"
+#include "Core/Scene.hpp"
 
 #include <vector>
 #include <array>

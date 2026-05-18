@@ -1,5 +1,5 @@
 #include "Object/BoundingBox.hpp"
-#include "Tracer/Interval.hpp"
+#include "Core/Interval.hpp"
 
 #include <algorithm>
 

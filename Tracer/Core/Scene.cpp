@@ -1,4 +1,4 @@
-#include "Tracer/Scene.hpp"
+#include "Core/Scene.hpp"
 
 namespace Tracer {
 

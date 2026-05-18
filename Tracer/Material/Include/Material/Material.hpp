@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Tracer/Types.hpp"
-#include "Tracer/Ray.hpp"
-#include "Tracer/Scene.hpp"
-#include "Tracer/Image.hpp"
-#include "Tracer/Interval.hpp"
+#include "Core/Types.hpp"
+#include "Core/Ray.hpp"
+#include "Core/Scene.hpp"
+#include "Core/Image.hpp"
+#include "Core/Interval.hpp"
 
 #include "Surface/Surface.hpp"
 #include "Surface/SolidColor.hpp"
@@ -16,23 +16,26 @@
 
 namespace Tracer {
 
+/* Materal Interface */
 class Material {
 public:
-    virtual Ray scatterRay(const Ray& ray, HitInfo& info, const Color4 missColor, Color4& attenuation) const = 0;
+    virtual bool scatterRay(const Ray& incomingRay, HitInfo& info, Color4& attenuation, Ray& outgoingRay, const Color4 missColor) const = 0;
     Color4 rayColor(const Ray& ray, i32 rayDepth, const Color4 missColor, Scene* scene) const {
         if (rayDepth <= 0) {
             return missColor;
         }
 
         HitInfo info{};
-        Color4 attenuation;
         for (auto object : scene->findHitObjects(ray)) {
             if (object->isHit(ray, info, Interval())) {
-                Ray scattered = scatterRay(ray, info, missColor, attenuation);
-                return (attenuation * rayColor(scattered, rayDepth - 1, missColor, scene));
+                Ray scattered;
+                //if ( object->getMaterial()->scatter()) {
+                //    return
+                //}
+                return missColor;
             }
         }
-        return attenuation;
+        return Color4(1.0f, 1.0f, 1.0f, 1.0f); /* ? sky color ?*/
     }
 
     u64 getVersion() const { return m_version; }
@@ -41,6 +44,8 @@ protected:
     u64 m_version = {0};
 };
 
+/* Diffuse Materal */
+/*
 class Diffuse : public Material {
 public:
     Diffuse(Color4 baseColor) {
@@ -55,32 +60,33 @@ public:
     }
 
     /* FIXME: Really don't like that fact that this returns a ray and modifites the color attenuation.
-    Maybe Return an Struct of ColoredRay. Ray + Color4 */
-    Ray scatterRay(const Ray& ray, HitInfo& info, const Color4 missColor, Color4& attenuation) const override {
-        Vector3 scatterDirection = info.normal + randomUnitVector();
-        Ray scatteredRay = Ray(info.position, scatterDirection);
-        attenuation = m_albedoSurface->CalculateColor(info);
-        return scatteredRay;
-    }
+    Maybe Return an Struct of ColoredRay. Ray + Color4 
+    //Ray scatterRay(const Ray& ray, HitInfo& info, const Color4 missColor, Color4& attenuation) const override {
+    //    Vector3 scatterDirection = info.normal + randomUnitVector();
+    //    Ray scatteredRay = Ray(info.position, scatterDirection);
+    //    attenuation = m_albedoSurface->CalculateColor(info);
+    //    return scatteredRay;
+    //}
     
 private:
-    /* Move this into it's own maths or vector file.*/
+    /* Move this into it's own maths or vector file.
     inline Vector3 randomUnitVector() const {
         std::default_random_engine m_rd;
         std::uniform_real_distribution<f32> m_dist (-1.0f, 1.0f);
-        //while (true) {
-            /* Random Vector Between -1.0f to 1.0f */
+        while (true) {
+            ///* Random Vector Between -1.0f to 1.0f 
             auto p = Vector3(m_dist(m_rd), m_dist(m_rd), m_dist(m_rd));
             auto lensq = std::powf(p.length(), 2.0f);
-            //if (1e-160 < lensq && lensq <= 1.0f) {
+            if (0.01f < lensq && lensq <= 1.0f) {
                 return p / std::sqrt(lensq);
-            //}
-        //}
+            }
+        }
+        return Vector3(0.0f);
     } 
 
     UniquePtr<Surface> m_normalsSurface;
     UniquePtr<Surface> m_albedoSurface;
     UniquePtr<Image> m_albedoTexture;
-};
+}; */
 
 }/* End of Tracer namespace*/

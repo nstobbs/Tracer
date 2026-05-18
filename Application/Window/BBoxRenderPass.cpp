@@ -46,6 +46,11 @@ bool BBoxRenderPass::init() {
         std::printf("{Error} Couldn't find inView in Vertex Shader.\n");
         return false;
     }
+    m_brightnessLocation = glGetUniformLocation(m_shaderProgram, "uBrightness");
+    if (m_brightnessLocation == -1) {
+        std::printf("{Error} Couldn't find uBrightness in Fragment Shader.\n");
+        return false;
+    }
 
     /* Vertex Array Buffer */
     glGenVertexArrays(1, &m_vertexArrayBuffer);
@@ -106,9 +111,12 @@ void BBoxRenderPass::render(RenderContext& context) {
     proj[1][1] *= 2.0f;
     glUniformMatrix4fv(m_inProjectionLocation, 1, GL_FALSE, glm::value_ptr(proj));
 
+    glUniform1f(m_brightnessLocation, m_brightness);
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    glLineWidth(m_thickness);
     glDrawArraysInstanced(GL_LINES, 0, 24, m_bboxMatrices.size());
     glDisable(GL_BLEND);
 }
@@ -125,13 +133,12 @@ void BBoxRenderPass::cleanup() {
 }
 
 void BBoxRenderPass::setScene(Scene* scene) {
-    constexpr bool skipEmptyNodes = false; // FIXME Move this into the class header!
     m_scene = scene;
     m_bboxMatrices.clear();
     for (auto object : m_scene->getObjects()) {
         auto nodes = static_cast<Mesh*>(object)->getMeshContainer()->AllNodes();
         for (auto node : nodes) {
-            if (node.indices.empty() && skipEmptyNodes) {
+            if (node.indices.empty() && isSkipEmptyNodesEnabled()) {
                 continue;
             }
             
@@ -158,6 +165,11 @@ void BBoxRenderPass::setScene(Scene* scene) {
     glBindVertexArray(NULL);
 }
 
+void BBoxRenderPass::setSkipEmptyNodes(bool value) {
+    m_skipEmptyNodes = value;
+    setScene(m_scene); // Refresh the BBox 
+}
+
 /* Shader Source Code */
 std::string BBoxRenderPass::vertexSource() {
     std::string source = R"(
@@ -167,9 +179,13 @@ std::string BBoxRenderPass::vertexSource() {
 
         uniform mat4 view;
         uniform mat4 proj;
+        uniform float uBrightness;
+
+        out float brightness;
 
         void main() {
             gl_Position = proj * view * instanceModel * vec4(inPosition, 1.0);
+            brightness = uBrightness;
         }
     )";
     return source;
@@ -178,10 +194,11 @@ std::string BBoxRenderPass::vertexSource() {
 std::string BBoxRenderPass::fragmentSource() {
     std::string source = R"(
         #version 330 core
+        in float brightness;
         out vec4 outColor;
 
         void main() {
-            outColor = vec4(1.0f, 1.0f, 1.0f, 0.05f);
+            outColor = vec4(1.0f, 1.0f, 1.0f, brightness);
         }
     )";
     return source;

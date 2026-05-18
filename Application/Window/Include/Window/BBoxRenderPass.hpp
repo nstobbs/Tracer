@@ -4,7 +4,7 @@
 #include "Window/OpenGlHelper.hpp"
 
 #include "Object/BoundingBox.hpp"
-#include "Tracer/Scene.hpp"
+#include "Core/Scene.hpp"
 
 #include <array>
 #include <unordered_map>
@@ -31,10 +31,23 @@ public:
 
 	void setScene(Scene* scene);
 
+	f32 getBrightness() const { return m_brightness; }
+	void setBrightness(f32 value) { m_brightness = value; }
+
+	f32 getThickness() const { return m_thickness; }
+	void setThickness(f32 value) { m_thickness = value; }
+
+	void setSkipEmptyNodes(bool value);
+	bool isSkipEmptyNodesEnabled() const { return m_skipEmptyNodes; }
+
 private:
 	std::vector<Matrix4> m_bboxMatrices;
 	Scene* m_scene;
 	u64 m_lastSceneVersion;
+
+	f32 m_brightness = {0.05f};
+	f32 m_thickness = {1.0f}; 
+	bool m_skipEmptyNodes = {false};
 
     /* GL Resources */
 	std::string fragmentSource();
@@ -48,6 +61,7 @@ private:
 	GLuint m_vertexUnitCubeBuffer;
 	GLuint m_instanceMatricesBuffer;
 
+	GLuint m_brightnessLocation;
 	GLuint m_inPositionLocation;
 	GLuint m_inInstanceLocation;
 	GLuint m_inViewLocation;

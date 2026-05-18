@@ -1,5 +1,7 @@
+import os
 from conan import ConanFile
 from conan.tools.cmake import cmake_layout
+from conan.tools.files import copy
 
 class TracerConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
@@ -15,6 +17,15 @@ class TracerConan(ConanFile):
         self.requires("assimp/5.4.3")
         self.requires("sdl/2.28.3")
         self.requires("sdl_image/2.6.3")
+        self.requires("imgui/1.92.7")
+
+    def generate(self):
+        copy(self, "imgui_impl_sdl2*", 
+             os.path.join(self.dependencies["imgui"].package_folder, "res", "bindings"),
+             os.path.join(self.source_folder, "Application", "Window", "bindings"))
+        copy(self, "imgui_impl_opengl3*",
+             os.path.join(self.dependencies["imgui"].package_folder, "res", "bindings"),
+             os.path.join(self.source_folder, "Application", "Window", "bindings"))
 
     def layout(self):
         cmake_layout(self)

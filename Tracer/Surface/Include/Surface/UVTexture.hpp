@@ -1,5 +1,5 @@
 #include "Surface/Surface.hpp"
-#include "Tracer/Image.hpp"
+#include "Core/Image.hpp"
 
 #include <algorithm>
 

@@ -1,6 +1,8 @@
 #include "Object/BoundingVolumeHierarchy.hpp"
 #include "Object/Mesh.hpp"
-#include "Tracer/Interval.hpp"
+#include "Core/Interval.hpp"
+
+#include "Core/StatusMessage.hpp"
 
 #include <iostream>
 #include <algorithm>
@@ -176,7 +178,9 @@ void MeshContainer::BuildBVH() {
     };
 
     std::printf("Starting BVH Tree Build...\n");
+    StatusMessage::Set("Tracer::BVH::MeshContainer: Building BVH.");
     buildTree(buildTree, 0);
+    StatusMessage::Set("Tracer::BVH::MeshContainer: Finished BVH Build.");
 
     std::printf("Final BVH Node Count: %i\n", static_cast<i32>(m_nodes.size()));
 

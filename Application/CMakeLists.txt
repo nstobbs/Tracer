@@ -15,11 +15,13 @@ target_include_directories(Application PUBLIC
 
 target_link_libraries(Application PUBLIC
 # Tracer Libraries 
-    Tracer
-    Object
-    Surface
-    Material
-    Window
+    Tracer::Core
+    Tracer::Object
+    Tracer::Surface
+    Tracer::Material
+    Tracer::Engine
+# Application Libraries
+    Application::Window
 # Conan Libraries
     SDL2::SDL2
     SDL2::SDL2main

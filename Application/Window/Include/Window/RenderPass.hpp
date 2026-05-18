@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Tracer/Camera.hpp"
+#include "Core/Camera.hpp"
 
 using namespace Tracer;
 

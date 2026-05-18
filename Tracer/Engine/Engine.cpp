@@ -1,3 +1,4 @@
+#include "Core/StatusMessage.hpp"
 #include "Engine/Engine.hpp"
 #include "Material/Material.hpp"
 
@@ -51,6 +52,16 @@ void Engine::SetTileSize(u32 size) {
     }
 }
 
+void Engine::SetMissedColor(Color4 color) {
+    m_version++; 
+    m_missedColor = color;
+}
+
+void Engine::SetMaxRayDepth(u32 depth) {
+    m_version++;
+    m_maxRayDepth = depth;
+}
+
 void Engine::SetTargetLayer(const std::string& layer) {
     m_version++;
     m_targetLayer = layer;
@@ -64,26 +75,41 @@ void Engine::SetActiveTilesRecord(ActiveTilesRecord* activeList) {
 
 void Engine::StartRendering() {
     m_isRunning = true;
+    StatusMessage::Set("Tracer::Engine: Started Rendering.");
 }
 
 void Engine::StopRendering() {
     m_isRunning = false;
+    m_pool->clearQueue();
+    StatusMessage::Set("Tracer::Engine: Stopped Render.");
 }
 
 bool Engine::hasVersionChanged() {
     if (m_version == m_lastVersion && m_lastCameraVersion == m_camera->GetVersion()) {
         return false;
-    } 
+    }
+    return true;
+}
 
+void Engine::updateLastVerion() {
     m_lastVersion = m_version;
     m_lastCameraVersion = m_camera->GetVersion();
-    return true;
 }
 
 void Engine::Tick() {
     if (m_isRunning && hasVersionChanged()) {
         m_tasker->SetTileOrder(TileOrder::eCenterOut);
         m_tasker->requestFrame();
+        StatusMessage::Set("Tracer::Engine: Requesting Frame");
+        updateLastVerion();
+    }
+
+    bool isPoolRendering = m_pool->isRendering(); 
+
+    if (m_isRunning && isPoolRendering) {
+        StatusMessage::Set("Tracer::Engine: Render In Progress");
+    } else if (m_isRunning && !isPoolRendering) {
+        StatusMessage::Set("Tracer::Engine: Waiting For Tasks");
     }
 }
 
@@ -155,8 +181,10 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
             };
         }
         if (frontObject) {
-            auto materialOutput = frontObject->getMaterial()->rayColor(ray, kMaxDepth, m_missedColor, m_scene); 
-            color += materialOutput;
+            //auto materialOutput = frontObject->getMaterial()->rayColor(ray, kMaxDepth, m_missedColor, m_scene); 
+            //color += materialOutput;
+
+            color += frontObject->getSurface()->CalculateColor(info);
         }
     }
 

@@ -1,5 +1,7 @@
 #include "Object/Mesh.hpp"
 
+#include "Core/StatusMessage.hpp"
+
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -179,12 +181,14 @@ Mesh Mesh::TriangleMesh() {
 };
 
 std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
+    StatusMessage::Set("Tracer::Mesh: Reading File");
     std::vector<Mesh> outputScene;
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filepath, aiProcess_Triangulate);
 
     if (!scene) {
         std::printf("Mesh.cpp: Failed to Read Model: %s\n", importer.GetErrorString());
+        StatusMessage::Set("Tracer::Mesh: Failed to Read File " + std::string(importer.GetErrorString()));
     };
 
     /* Find each node that contains a mesh. */
@@ -265,6 +269,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
             outputScene.push_back(meshObject);
         }
     }
+    StatusMessage::Set("Tracer::Mesh: Finished Reading File");
     return outputScene;
 };
 

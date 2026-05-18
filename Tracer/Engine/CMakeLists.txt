@@ -13,6 +13,8 @@ find_package(assimp)
 
 target_link_libraries(Engine
     glm::glm
-    Window
-    Material
+    Application::Window
+    Tracer::Material
 )
+
+add_library(Tracer::Engine ALIAS Engine)

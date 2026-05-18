@@ -4,9 +4,9 @@
 
 #include "Engine/Engine.hpp"
 
-#include "Tracer/Camera.hpp"
-#include "Tracer/Image.hpp"
-#include "Tracer/Types.hpp"
+#include "Core/Camera.hpp"
+#include "Core/Image.hpp"
+#include "Core/Types.hpp"
 
 class ApplicationSettings {
 public:

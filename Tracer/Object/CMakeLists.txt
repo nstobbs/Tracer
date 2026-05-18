@@ -10,10 +10,12 @@ target_include_directories(Object PUBLIC
 )
 
 find_package(glm REQUIRED)
-find_package(assimp)
+find_package(assimp REQUIRED)
 
 target_link_libraries(Object
-    Tracer
+    Tracer::Core
     glm::glm
     assimp::assimp
 )
+
+add_library(Tracer::Object ALIAS Object)

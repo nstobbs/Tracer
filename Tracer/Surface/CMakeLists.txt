@@ -6,6 +6,8 @@ target_include_directories(Surface INTERFACE
 )
 
 target_link_libraries(Surface INTERFACE
-    stb
-    Window
+    Tracer::Core
+    Application::Window
 )
+
+add_library(Tracer::Surface ALIAS Surface)

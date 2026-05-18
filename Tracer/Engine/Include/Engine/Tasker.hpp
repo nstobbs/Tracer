@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Tracer/Types.hpp"
+#include "Core/Types.hpp"
 
 #include <condition_variable>
 #include <functional>

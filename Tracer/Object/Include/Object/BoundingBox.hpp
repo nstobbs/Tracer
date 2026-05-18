@@ -1,6 +1,6 @@
 #pragma once
-#include "Tracer/Types.hpp"
-#include "Tracer/Ray.hpp"
+#include "Core/Types.hpp"
+#include "Core/Ray.hpp"
 
 namespace Tracer {
 

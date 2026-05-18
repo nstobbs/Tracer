@@ -1,6 +1,6 @@
 #pragma once
-#include "Tracer/Ray.hpp"
-#include "Tracer/Image.hpp"
+#include "Core/Ray.hpp"
+#include "Core/Image.hpp"
 
 #include <random>
 

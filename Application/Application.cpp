@@ -1,7 +1,12 @@
 #include "Application/Application.hpp"
 
 #include "Object/Mesh.hpp"
-#include "Material/Material.hpp"
+//#include "Material/Material.hpp"
+
+#include "Surface/GeometricNormals.hpp"
+#include "Surface/SurfaceNormals.hpp"
+
+#include <imgui.h>
 
 #include <iostream>
 #include <cstdlib>
@@ -93,16 +98,16 @@ Application::Application(ApplicationSettings settings) {
     //auto textureSurface = UVTexture(&texture, "RGBA");
     //auto wireframeSurface = Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     //auto solidSurface = SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
-    //auto geometricNormalSurface = GeometricNormals();
-    //auto surfaceNormalsSurface = SurfaceNormals();
+    auto geometricNormalSurface = GeometricNormals();
+    auto surfaceNormalsSurface = SurfaceNormals();
     //auto surface = MergeSurfaces(static_cast<Surface*>(&wireframeSurface), 
     //                             static_cast<Surface*>(&surfaceNormalsSurface),
     //                             MergeOperation::Plus);
 
-    Diffuse diffuseMaterial(Color4(0.5f, 0.5f, 0.5f, 1.0f));
+    //Diffuse diffuseMaterial(Color4(1.0f, 1.0f, 1.0f, 1.0f));
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
-        mesh.setMaterial(static_cast<Material*>(&diffuseMaterial));
+        mesh.setSurface(static_cast<Surface*>(&surfaceNormalsSurface));
         m_scene->addObject(static_cast<Object*>(&mesh));
     }
 
@@ -132,11 +137,14 @@ Application::Application(ApplicationSettings settings) {
 
     m_window->setTarget(m_image->GetLayer(targetLayerName), m_camera.get());
     m_window->getBBoxDisplayHUD()->setScene(m_scene.get());
+    m_window->setEngine(m_engine.get());
 
     /* Main Loop */
     SDL_Event event;
     while (!m_shutdown) {
-        if (SDL_PollEvent(&event) != 0) {
+        while (SDL_PollEvent(&event) != 0) {
+            /* Process ImGui Event*/
+            m_window->processEvent(&event);
 
             /* Shutdown Application*/
             if (event.type == SDL_QUIT) {
