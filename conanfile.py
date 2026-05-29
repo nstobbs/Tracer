@@ -17,7 +17,7 @@ class TracerConan(ConanFile):
         self.requires("assimp/5.4.3")
         self.requires("sdl/2.28.3")
         self.requires("sdl_image/2.6.3")
-        self.requires("imgui/1.92.7")
+        self.requires("imgui/1.91.4")
 
     def generate(self):
         copy(self, "imgui_impl_sdl2*", 
