@@ -3,6 +3,7 @@ add_library(Object STATIC
     BoundingVolumeHierarchy.cpp
     Mesh.cpp
     Vertex.cpp
+    Transform.cpp
 )
 
 target_include_directories(Object PUBLIC 

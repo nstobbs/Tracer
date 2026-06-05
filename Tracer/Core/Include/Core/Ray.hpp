@@ -28,7 +28,10 @@ union ShapeGen {
     Triangle triangle;
 };
 
+
+class Object;
 struct HitInfo {
+    Object* object = {nullptr};
     Point3 position;
     Vector3 normal;
     f32 distance;

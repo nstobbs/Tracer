@@ -204,7 +204,7 @@ std::vector<MeshNode> MeshContainer::FindAllHitNodes(const Ray& ray) const {
             results.push_back(node);
             return;
         }
-
+        
         if (node.leftIndex != -1) {
             if (m_nodes.at(node.leftIndex).bbox.isHit(ray)) {
                 self(self, ray, m_nodes.at(node.leftIndex));

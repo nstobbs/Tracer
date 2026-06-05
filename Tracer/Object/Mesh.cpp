@@ -23,9 +23,9 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
     /* Per Each Triangle Of this Mesh */
     u64 indexCount = m_indices.size();
     //assert(indexCount % 3 == 0);
-
+    auto localRay = m_transform.transformRay(ray);
     /* Find All of the Triangles to Render from the BVH */
-    auto nodes = m_container.FindAllHitNodes(ray);
+    auto nodes = m_container.FindAllHitNodes(localRay);
 
     /* Report the highest Node Count */
 #if 1
@@ -55,13 +55,13 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
             Vector3 triNormal = glm::normalize(glm::cross(edge0, edge1));
 
             /* Check if the Ray is Parallel */
-            if (std::fabs(glm::dot(triNormal, ray.direction)) <= kThreshold) {
+            if (std::fabs(glm::dot(triNormal, localRay.direction)) <= kThreshold) {
                 continue;
             }
            
             /* Calculate the Distance of the Ray and the intersection of the triangles plane  */
-            f32 distance = glm::dot(triNormal, (v0.position - ray.origin)) /
-                                        glm::dot(triNormal, ray.direction);
+            f32 distance = glm::dot(triNormal, (v0.position - localRay.origin)) /
+                                        glm::dot(triNormal, localRay.direction);
             if (distance < 0.0f) {
                 continue;
             }
@@ -76,7 +76,7 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
             }
 
             /* Calculate Hit Position on Triangle Plane */
-            Point3 hitPosition = ray.origin + ray.direction * static_cast<f32>(distance);
+            Point3 hitPosition = localRay.origin + localRay.direction * static_cast<f32>(distance);
     
             /* Calculate the barycentric coordinates for that given point.*/
             Vector3 e0 = v1.position - v0.position;
@@ -111,11 +111,12 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
             };
 
             /* Record Hit Information */
+            hitInfo.object = static_cast<Object*>(this);
             hitInfo.hasHit = true;
             hitInfo.position = hitPosition;
             hitInfo.distance = distance;
             hitInfo.normal = triNormal;
-            hitInfo.isFrontFace = (glm::dot(hitInfo.normal, ray.direction) < 0.0f);
+            hitInfo.isFrontFace = (glm::dot(hitInfo.normal, localRay.direction) < 0.0f);
 
             /* Append Extra Shape Info to HitInfo */
             hitInfo.type = ShapeType::eTriangle;
@@ -125,6 +126,9 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
             hitInfo.extra.triangle.v0 = v0;
             hitInfo.extra.triangle.v1 = v1;
             hitInfo.extra.triangle.v2 = v2;
+            
+            auto localInfo = m_transform.transformHitInfo(hitInfo, ray);
+            hitInfo = localInfo;
         }
     }
     return hitInfo.hasHit;
@@ -178,6 +182,65 @@ Mesh Mesh::TriangleMesh() {
     //triangleMesh.m_position = Point3(0.0f, 0.0f, 0.0f);
 
     return triangleMesh;
+};
+
+Mesh Mesh::RetangleMesh() {
+    Mesh rectangleMesh;
+    VertexInfo info {
+        .hasPosition = true,
+        .hasNormals = true,
+        .hasTextureUVs = false, // TODO: Add UVs
+        .hasColor = false };
+    rectangleMesh.m_info = info;
+
+    Vertex A;
+    Vertex B;
+    Vertex C;
+    Vertex D;
+    std::vector<Vertex> vertices;
+    
+    /* CounterClockWise Winding*/
+    /* Top Right */
+    A.position = Point3(-1.0f, 1.0f, 2.5f);
+    A.normals = Vector3(0.0f, 0.0f, 1.0f);
+
+    /* Top Left */
+    B.position = Point3(1.0f, 1.0f, 2.5f);
+    B.normals = Vector3(0.0f, 0.0f, 1.0f);
+
+    /* Bottom Left */
+    C.position = Point3(1.0f, -1.0f, 2.5f);
+    C.normals = Vector3(0.0f, 0.0f, 1.0f);
+
+    /* Bottom Right */
+    D.position = Point3(1.0f, -1.0f, 2.5f);
+    D.normals = Vector3(0.0f, 0.0f, 1.0f);
+    
+    vertices.push_back(A);
+    vertices.push_back(C);
+    vertices.push_back(B);
+    vertices.push_back(D);
+    
+
+    for (auto& v : vertices) {
+        rectangleMesh.m_bbox.Expand(v.position);
+    }
+
+    rectangleMesh.m_vertices = vertices;
+
+    std::vector<u64> indices = {0, 1, 2};
+    rectangleMesh.m_indices = indices;
+    
+    rectangleMesh.m_container.SetTrianglesPerNode(2);
+    rectangleMesh.m_container.BuildBVH();
+
+    return rectangleMesh;
+};
+
+//FIXME: Just read a file of a sphere, cba to generate one rn 
+Mesh Mesh::SphereMesh() {
+    Mesh empty;
+    return empty;
 };
 
 std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {

@@ -98,9 +98,14 @@ void Engine::updateLastVerion() {
 
 void Engine::Tick() {
     if (m_isRunning && hasVersionChanged()) {
+        StatusMessage::Set("Tracer::Engine: Requesting Frame");
+        /* Re-Cache Objects Transform Matrixes */
+        for (const auto& object :m_scene->getObjects()) {
+            object->transform().build();
+        }
+
         m_tasker->SetTileOrder(TileOrder::eCenterOut);
         m_tasker->requestFrame();
-        StatusMessage::Set("Tracer::Engine: Requesting Frame");
         updateLastVerion();
     }
 

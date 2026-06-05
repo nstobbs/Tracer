@@ -1,0 +1,6 @@
+/Application/Window/bindings/*
+/.vs/*
+/.vscode/*
+/CMakeUserPresets.json
+/build/*
+/devenv/*

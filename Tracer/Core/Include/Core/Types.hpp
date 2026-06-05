@@ -42,4 +42,11 @@ using UniquePtr = std::unique_ptr<T>;
 
 const f64 kPi = 3.1415926535897932385;
 
+enum class Axis {
+    eInvalid = -1,
+    eX = 0,
+    eY = 1,
+    eZ = 2
+};
+
 }

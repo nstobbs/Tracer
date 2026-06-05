@@ -12,10 +12,14 @@ public:
 
         Color4 output(0.0f, 0.0f, 0.0f, 1.0f);
         if (info.type == ShapeType::eTriangle) {
-            output = Color4(info.extra.triangle.v0.normals, 1.0f) * static_cast<f32>(info.extra.triangle.u);
-            output += Color4(info.extra.triangle.v1.normals, 1.0f) * static_cast<f32>(info.extra.triangle.v);
-            output += Color4(info.extra.triangle.v2.normals, 1.0f) * static_cast<f32>(info.extra.triangle.w);
-            output.z = 1.0f;
+            Vector3 objectSpaceNormals = info.extra.triangle.v0.normals * static_cast<f32>(info.extra.triangle.u) +
+                                         info.extra.triangle.v1.normals * static_cast<f32>(info.extra.triangle.v) +
+                                         info.extra.triangle.v2.normals * static_cast<f32>(info.extra.triangle.w);
+            Vector3 worldSpaceNormals {};
+            if (info.object) {
+                worldSpaceNormals = info.object->transform().vectorToWorld(objectSpaceNormals);
+            }
+            output = Color4(worldSpaceNormals, 1.0f);
         };
         return output;
     }

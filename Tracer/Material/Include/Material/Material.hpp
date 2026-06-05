@@ -6,87 +6,87 @@
 #include "Core/Image.hpp"
 #include "Core/Interval.hpp"
 
+#include "Object/Light.hpp"
+
 #include "Surface/Surface.hpp"
 #include "Surface/SolidColor.hpp"
 #include "Surface/UVTexture.hpp"
 #include "Surface/SurfaceNormals.hpp"
 
-#include <cmath>
-#include <random>
+#include <unordered_map>
 
 namespace Tracer {
 
-/* Materal Interface */
 class Material {
 public:
-    virtual bool scatterRay(const Ray& incomingRay, HitInfo& info, Color4& attenuation, Ray& outgoingRay, const Color4 missColor) const = 0;
-    Color4 rayColor(const Ray& ray, i32 rayDepth, const Color4 missColor, Scene* scene) const {
-        if (rayDepth <= 0) {
-            return missColor;
-        }
-
-        HitInfo info{};
-        for (auto object : scene->findHitObjects(ray)) {
-            if (object->isHit(ray, info, Interval())) {
-                Ray scattered;
-                //if ( object->getMaterial()->scatter()) {
-                //    return
-                //}
-                return missColor;
-            }
-        }
-        return Color4(1.0f, 1.0f, 1.0f, 1.0f); /* ? sky color ?*/
-    }
-
-    u64 getVersion() const { return m_version; }
+    //FIXME: Make this thread safe and const
+    virtual bool scatter(const Ray incoming, const HitInfo info, Ray& outgoing, u32 depth);
+    virtual LightFilterEvent createFilter(const Ray ray, const HitInfo info) const;
 protected:
-    std::vector<Surface*> m_surfaces;
-    u64 m_version = {0};
+    std::unordered_map<std::string, Surface*> m_surfaces;
+    u64 m_version = {0}; 
 };
 
-/* Diffuse Materal */
-/*
-class Diffuse : public Material {
+class DiffuseMaterial : public Material {
 public:
-    Diffuse(Color4 baseColor) {
-        m_albedoSurface = std::make_unique<SolidColor>(baseColor);
-        m_normalsSurface = std::make_unique<SurfaceNormals>();
-    }
-    
-    Diffuse(const std::string& texturePath) {
-        m_albedoTexture = std::make_unique<Image>(Image::ReadImage(texturePath, "albedo"));
-        m_albedoSurface = std::make_unique<UVTexture>(m_albedoTexture.get(), "albedo");
-        m_normalsSurface = std::make_unique<SurfaceNormals>();
-    }
+    DiffuseMaterial(Color4 color) {
+        initRandom();
+        SolidColor* solidColorSurface = new SolidColor(color);
+        m_surfaces.emplace("BaseColor", static_cast<Surface*>(solidColorSurface));
+        m_version++;
+    };
 
-    /* FIXME: Really don't like that fact that this returns a ray and modifites the color attenuation.
-    Maybe Return an Struct of ColoredRay. Ray + Color4 
-    //Ray scatterRay(const Ray& ray, HitInfo& info, const Color4 missColor, Color4& attenuation) const override {
-    //    Vector3 scatterDirection = info.normal + randomUnitVector();
-    //    Ray scatteredRay = Ray(info.position, scatterDirection);
-    //    attenuation = m_albedoSurface->CalculateColor(info);
-    //    return scatteredRay;
-    //}
-    
-private:
-    /* Move this into it's own maths or vector file.
-    inline Vector3 randomUnitVector() const {
-        std::default_random_engine m_rd;
-        std::uniform_real_distribution<f32> m_dist (-1.0f, 1.0f);
-        while (true) {
-            ///* Random Vector Between -1.0f to 1.0f 
-            auto p = Vector3(m_dist(m_rd), m_dist(m_rd), m_dist(m_rd));
-            auto lensq = std::powf(p.length(), 2.0f);
-            if (0.01f < lensq && lensq <= 1.0f) {
-                return p / std::sqrt(lensq);
-            }
+    DiffuseMaterial(Image* image, const std::string& layer) {
+        initRandom();
+        UVTexture* textureSurface = new UVTexture(image, layer);
+        m_surfaces.emplace("BaseColor", static_cast<Surface*>(textureSurface));
+        m_version++;
+    };
+
+    //FIXME: Make this thread safe and const
+    bool scatter(const Ray incoming, const HitInfo info, Ray& outgoing, u32 depth) override {
+        Vector3 randomPoint;
+        f32 length;
+
+        auto dist = std::uniform_real_distribution<f32>(0.0f, 1.0f);
+        do {
+            randomPoint.x = 2.0f * dist(m_gen) - 1.0f;
+            randomPoint.y = 2.0f * dist(m_gen) - 1.0f;
+            randomPoint.z = 2.0f * dist(m_gen) - 1.0f;
+            length = randomPoint.x * randomPoint.x +
+                     randomPoint.y * randomPoint.y +
+                     randomPoint.z * randomPoint.y;
+        } while (length > 1.0f || length == 0.0f);
+
+        f32 invLength = 1.0f / std::sqrt(length);
+        Vector3 scattered = {randomPoint.x * invLength,
+                             randomPoint.y * invLength,
+                             randomPoint.z * invLength};
+
+        f32 dot = glm::dot(scattered, info.normal);
+
+        if (dot < 0.0f) {
+            scattered *= -1.0f;
         }
-        return Vector3(0.0f);
-    } 
+        outgoing.origin = info.position;
+        outgoing.direction = scattered;
+        return true;
+    }
 
-    UniquePtr<Surface> m_normalsSurface;
-    UniquePtr<Surface> m_albedoSurface;
-    UniquePtr<Image> m_albedoTexture;
-}; */
+    LightFilterEvent createFilter(const Ray ray, const HitInfo info) const override {
+        LightFilterEvent filer{};
+        filer.lightEvent = m_surfaces.at("BaseColor")->CalculateColor(info);
+        return filer;
+    }
 
-}/* End of Tracer namespace*/
+private:
+    std::random_device m_rd;
+    std::mt19937 m_gen;
+    
+    void initRandom() {
+            m_gen = std::mt19937(m_rd());
+        }
+
+};
+
+}
