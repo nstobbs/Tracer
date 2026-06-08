@@ -29,7 +29,7 @@ void Scene::addLightSources(std::vector<LightSource*> lights) {
 std::vector<Object*> Scene::findHitObjects(const Ray& ray) {
     std::vector<Object*> found;
     for (auto& object : m_objects) {
-        if (object->getBBox().isHit(object->transform().transformRay(ray))) {
+        if (object->bbox().isHit(object->transform().transformRay(ray))) {
             found.push_back(object);
         }
     }

@@ -2,7 +2,6 @@ add_library(Object STATIC
     BoundingBox.cpp
     BoundingVolumeHierarchy.cpp
     Mesh.cpp
-    Vertex.cpp
     Transform.cpp
 )
 

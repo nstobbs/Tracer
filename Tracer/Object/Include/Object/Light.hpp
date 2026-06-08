@@ -51,6 +51,8 @@ public:
     virtual Ray fireRay() const = 0;
     virtual Color3 applyRecord(const LightFilterRecord& record) const = 0;
     void setColor(const Color4 color) { m_color = color; }
+    void setIntensity(const f32 value) { m_intensity = value; }
+
 protected:
     Color3 m_color;
     f32 m_intensity;
@@ -59,8 +61,11 @@ protected:
 /* AreaLight - A rectangle LightSource */
 class AreaLight : public LightSource {
 public:
-    AreaLight(Vector3 position, Vector3 direction) : m_position(position), m_direction(direction) {
+    AreaLight() {
         m_mesh = Mesh::RetangleMesh();
+        m_color = Color3(1.0f, 1.0f, 1.0f);
+        m_intensity = 10.0f;
+        m_bbox = m_mesh.bbox();
     }
     /* LightSource Virtual Functions */
     Ray fireRay() const override {
@@ -78,13 +83,17 @@ public:
         return m_mesh.isHit(ray, hitInfo, interval);
     }
 
-    void setPosition(Vector3 position) { m_position = position; }
-    void setDirection(Vector3 direction) { m_direction = direction; }
+    void setSurface(Surface* surface) override
+    { 
+        m_mesh.setSurface(surface);
+    }
+
+    Transform& transform() override {
+        return m_mesh.transform();
+    }
 
 private:
     Mesh m_mesh;
-    Vector3 m_position;
-    Vector3 m_direction;
 };
 
 /* DomeLight - A sphere LightSource that emitter rays from outside in.

@@ -18,10 +18,10 @@ public:
     void addLightSource(LightSource* light);
     void addLightSources(std::vector<LightSource*> lights);
 
-    std::vector<Object*>& getObjects() { return m_objects; }
-    std::vector<LightSource*>& getLightSources() { return m_lights; }
+    std::vector<Object*>& objects() { return m_objects; }
+    std::vector<LightSource*>& lightSources() { return m_lights; }
     
-    u64 getVersion() const { return m_version; }
+    u64 version() const { return m_version; }
 
     std::vector<Object*> findHitObjects(const Ray& ray); /* Returns all Objects that BBox intersect with the incoming ray.*/
 

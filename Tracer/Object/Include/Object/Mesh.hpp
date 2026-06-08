@@ -31,17 +31,11 @@ private:
     std::vector<Vertex> m_vertices;
     std::vector<u64> m_indices;
 
+    bool m_useContainer = {true};
     BVH::MeshContainer m_container;
 
     u64 m_version = {0};
     u64 m_lastVerion = {0};
-
-    /* Transformations */
-    Point3 m_position;
-    Vector3 m_rotation;
-    Vector3 m_scale;
-
-    Matrix4 m_cachedTransformationMatrix;
 };
 
 }

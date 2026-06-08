@@ -1,6 +1,8 @@
 #include "Core/StatusMessage.hpp"
 #include "Engine/Engine.hpp"
+#include "Surface/Wireframe.hpp"
 #include "Material/Material.hpp"
+#include "Object/Light.hpp"
 
 #include <cmath>
 #include <chrono>
@@ -99,9 +101,15 @@ void Engine::updateLastVerion() {
 void Engine::Tick() {
     if (m_isRunning && hasVersionChanged()) {
         StatusMessage::Set("Tracer::Engine: Requesting Frame");
+        
         /* Re-Cache Objects Transform Matrixes */
-        for (const auto& object :m_scene->getObjects()) {
+        for (const auto& object : m_scene->objects()) {
             object->transform().build();
+        }
+
+        /* Re-Cache LightSources Transform Matrixes */
+        for (const auto& lightSource : m_scene->lightSources()) {
+            lightSource->transform().build();
         }
 
         m_tasker->SetTileOrder(TileOrder::eCenterOut);
@@ -151,9 +159,49 @@ void Engine::RenderTile(u32 x, u32 y) {
     }
 }
 
-Color4 Engine::GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const {
-    return Color4(0.0f);
-}
+Color4 Engine::processLights(LightFilterRecord& record, const Ray& ray, const HitInfo& info, u64& depth) const {
+    if (depth == m_maxRayDepth) {
+        return m_missedColor; /* Max Ray Depth was Reached */
+    } else {
+        if (info.object) {
+            /* Record Lighting Event */
+            LightFilterEvent event = info.object->material()->createFilter(ray, info);
+            record.push(event);
+
+            /* Scatter From Material */
+            Ray scatted{};
+            HitInfo scattedInfo{};
+            depth++;
+            if (info.object->material()->scatter(ray, info, scatted)) {
+                /* Check if we hit a LightSource */
+                for (auto const& light : m_scene->lightSources()) {
+                    if (light->isHit(scatted, scattedInfo, Interval())) {
+                        return Color4(light->applyRecord(record), 1.0f); /* Hit a LightSource */
+                    }
+                }
+                
+                /* Check if we hit any Objects */
+                Object* frontObject = nullptr;
+                HitInfo frontInfo{};
+                frontInfo.distance = Interval().Max();
+
+                for (auto const& object : m_scene->findHitObjects(scatted)) {
+                    if (object->isHit(scatted, scattedInfo, Interval())) {
+                        if (scattedInfo.distance < frontInfo.distance) {
+                            frontObject = object;
+                            frontInfo = scattedInfo;
+                        }
+                    }
+                }
+
+                if (frontInfo.object){
+                    processLights(record, scatted, frontInfo, depth); /* Hit an Object */
+                }
+            }
+        }
+    }
+    return m_missedColor; /* Ray Never Hit anything else... */
+};
 
 void Engine::CalculatePixelColor(u32 x, u32 y) const {
     /* Check Image Bounding Box */
@@ -175,21 +223,26 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
 
         /* Depth Testing */
         Object* frontObject = nullptr;
-        f32 distanceToObject = Interval().Max();
+        HitInfo frontInfo{};
+        frontInfo.distance = Interval().Max();
 
-        for (auto object : m_scene->findHitObjects(ray)) {
+        /* Find Closest Object */
+        const auto& objects = m_scene->findHitObjects(ray);
+        for (const auto& object : objects) {
             if (object->isHit(ray, info, Interval())) {
-                if (info.distance < distanceToObject) {
+                if (info.distance < frontInfo.distance) {
                     frontObject = object;
-                    distanceToObject = info.distance;
+                    frontInfo = info;
                 }
             };
         }
-        if (frontObject) {
-            //auto materialOutput = frontObject->getMaterial()->rayColor(ray, kMaxDepth, m_missedColor, m_scene); 
-            //color += materialOutput;
 
-            color += frontObject->getSurface()->CalculateColor(info);
+        /* Calculate Lighting */
+        if (frontInfo.object) {
+            LightFilterRecord record = LightFilterRecord(false);
+            u64 depth = 0;
+            color += processLights(record, ray, frontInfo, depth);
+            //color += frontInfo.object->surface()->CalculateColor(frontInfo);
         }
     }
 

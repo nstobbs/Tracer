@@ -137,7 +137,7 @@ std::pair<MeshNode, MeshNode> MeshContainer::splitNode(MeshNode& node) {
 
 void MeshContainer::BuildBVH() {
     // Build the Root Node
-    BBox rootBBox = m_pMesh->getBBox();
+    BBox rootBBox = m_pMesh->bbox();
     auto& rootVertices = m_pMesh->GetVertices();
     auto rootIndices = m_pMesh->GetIndices();
     m_nodes.push_back(MeshNode{

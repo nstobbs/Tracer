@@ -20,8 +20,8 @@ namespace Tracer {
 class Material {
 public:
     //FIXME: Make this thread safe and const
-    virtual bool scatter(const Ray incoming, const HitInfo info, Ray& outgoing, u32 depth);
-    virtual LightFilterEvent createFilter(const Ray ray, const HitInfo info) const;
+    virtual bool scatter(const Ray incoming, const HitInfo info, Ray& outgoing) = 0;
+    virtual LightFilterEvent createFilter(const Ray ray, const HitInfo info) const = 0;
 protected:
     std::unordered_map<std::string, Surface*> m_surfaces;
     u64 m_version = {0}; 
@@ -44,7 +44,7 @@ public:
     };
 
     //FIXME: Make this thread safe and const
-    bool scatter(const Ray incoming, const HitInfo info, Ray& outgoing, u32 depth) override {
+    bool scatter(const Ray incoming, const HitInfo info, Ray& outgoing) override {
         Vector3 randomPoint;
         f32 length;
 

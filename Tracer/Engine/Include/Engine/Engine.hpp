@@ -21,6 +21,8 @@
 
 namespace Tracer {
 
+class LightFilterRecord;
+
 class Engine {
 public:
     Engine();
@@ -55,8 +57,10 @@ private:
     bool hasVersionChanged(); /* Returns true if the engine or camera version has changed */
     void updateLastVerion(); /* Updates the Last Versions with the Currect Versions */ 
     Layer* GetTargetLayer() const { return m_image->GetLayer(m_targetLayer); }
-    Color4 GetRayColor(const Ray& ray, HitInfo hitInfo, i32 maxDepth, Scene* scene) const;
+
+    Color4 processLights(LightFilterRecord& record, const Ray& ray, const HitInfo& info, u64& depth) const;
     void CalculatePixelColor(u32 x, u32 y) const;
+
     Vector3 SampleSquare() const;
 
     u32 m_samplesPerPixel = {1};

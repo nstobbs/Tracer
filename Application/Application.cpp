@@ -1,10 +1,10 @@
 #include "Application/Application.hpp"
 
+#include "Object/Light.hpp"
 #include "Object/Mesh.hpp"
-//#include "Material/Material.hpp"
 
 #include "Surface/GeometricNormals.hpp"
-#include "Surface/SurfaceNormals.hpp"
+#include "Material/Material.hpp"
 
 #include <imgui.h>
 
@@ -23,6 +23,7 @@ namespace {
     constexpr int kWindowHeight = kHalfRes ? kHeight / 2 : kHeight;
 }
 
+//TODO: Move this into it own .cpp
 /* Application Settings */
 ApplicationSettings::ApplicationSettings(int argc, char** argv) {
     /* Input Model File Path */
@@ -98,18 +99,44 @@ Application::Application(ApplicationSettings settings) {
     //auto textureSurface = UVTexture(&texture, "RGBA");
     //auto wireframeSurface = Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
     //auto solidSurface = SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
-    auto geometricNormalSurface = GeometricNormals();
+    
     auto surfaceNormalsSurface = SurfaceNormals();
+    auto geometricNormalSurface = GeometricNormals();
+    auto redSurface = SolidColor(Color4(1.0f, 0.0f, 0.0f, 1.0f));
+    auto blueSurface = SolidColor(Color4(0.0f, 0.0f, 1.0f, 1.0f));
+
+    auto material = DiffuseMaterial(Color4(1.0f, 1.0f, 1.0f, 1.0f));
     //auto surface = MergeSurfaces(static_cast<Surface*>(&wireframeSurface), 
     //                             static_cast<Surface*>(&surfaceNormalsSurface),
     //                             MergeOperation::Plus);
 
-    //Diffuse diffuseMaterial(Color4(1.0f, 1.0f, 1.0f, 1.0f));
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
-        mesh.setSurface(static_cast<Surface*>(&surfaceNormalsSurface));
+        mesh.setMaterial(static_cast<Material*>(&material));
+        //mesh.setSurface(static_cast<Surface*>(&blueSurface));
         m_scene->addObject(static_cast<Object*>(&mesh));
     }
+
+    //auto mesh = Mesh::RetangleMesh();
+    //mesh.setSurface(static_cast<Surface*>(&blueSurface));
+    //m_scene->addObject(static_cast<Object*>(&mesh));
+
+    /* Lights */
+    auto redLight = AreaLight();
+    auto blueLight = AreaLight();
+    auto greenLight = AreaLight();
+
+    redLight.setColor(Color4(1.0f, 0.0f, 0.0f, 1.0f));
+    redLight.transform().setTranslate(Point3(2.5f, 0.0f, 0.0f));
+
+    greenLight.setColor(Color4(0.0f, 1.0f, 0.0f, 1.0f));
+
+    blueLight.setColor(Color4(0.0f, 0.0f, 1.0f, 1.0f));
+    blueLight.transform().setTranslate(Point3(-2.5f, 0.0f, 0.0f));
+
+    m_scene->addLightSource(static_cast<LightSource*>(&redLight));
+    m_scene->addLightSource(static_cast<LightSource*>(&greenLight));
+    m_scene->addLightSource(static_cast<LightSource*>(&blueLight));
 
 #else
 

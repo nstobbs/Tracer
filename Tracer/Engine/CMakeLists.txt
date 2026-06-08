@@ -15,6 +15,7 @@ target_link_libraries(Engine
     glm::glm
     Application::Window
     Tracer::Material
+    Tracer::Surface
 )
 
 add_library(Tracer::Engine ALIAS Engine)

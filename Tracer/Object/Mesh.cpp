@@ -20,12 +20,14 @@ Mesh::Mesh() {
 }
 
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
-    /* Per Each Triangle Of this Mesh */
-    u64 indexCount = m_indices.size();
-    //assert(indexCount % 3 == 0);
     auto localRay = m_transform.transformRay(ray);
-    /* Find All of the Triangles to Render from the BVH */
-    auto nodes = m_container.FindAllHitNodes(localRay);
+    std::vector<BVH::MeshNode> nodes;
+    if (m_useContainer) {
+        /* Find All of the Triangles to Render from the BVH */
+        nodes = m_container.FindAllHitNodes(localRay);
+    } else {
+        nodes = m_container.AllNodes();
+    }
 
     /* Report the highest Node Count */
 #if 1
@@ -179,7 +181,6 @@ Mesh Mesh::TriangleMesh() {
     
     triangleMesh.m_container.SetTrianglesPerNode(1);
     triangleMesh.m_container.BuildBVH(); /* One Triangle */
-    //triangleMesh.m_position = Point3(0.0f, 0.0f, 0.0f);
 
     return triangleMesh;
 };
@@ -199,26 +200,25 @@ Mesh Mesh::RetangleMesh() {
     Vertex D;
     std::vector<Vertex> vertices;
     
-    /* CounterClockWise Winding*/
-    /* Top Right */
-    A.position = Point3(-1.0f, 1.0f, 2.5f);
+    /* Bottom Left */
+    A.position = Point3(-1.0f, -1.0f, 2.0f);
     A.normals = Vector3(0.0f, 0.0f, 1.0f);
 
-    /* Top Left */
-    B.position = Point3(1.0f, 1.0f, 2.5f);
+    /* Bottom Right */
+    B.position = Point3(1.0f, -1.0f, 2.0f);
     B.normals = Vector3(0.0f, 0.0f, 1.0f);
 
-    /* Bottom Left */
-    C.position = Point3(1.0f, -1.0f, 2.5f);
+    /* Top Right */
+    C.position = Point3(1.0f, 1.0f, 2.0f);
     C.normals = Vector3(0.0f, 0.0f, 1.0f);
 
-    /* Bottom Right */
-    D.position = Point3(1.0f, -1.0f, 2.5f);
+    /* Top Left*/
+    D.position = Point3(-1.0f, 1.0f, 2.0f);
     D.normals = Vector3(0.0f, 0.0f, 1.0f);
     
     vertices.push_back(A);
-    vertices.push_back(C);
     vertices.push_back(B);
+    vertices.push_back(C);
     vertices.push_back(D);
     
 
@@ -228,19 +228,19 @@ Mesh Mesh::RetangleMesh() {
 
     rectangleMesh.m_vertices = vertices;
 
-    std::vector<u64> indices = {0, 1, 2};
+    std::vector<u64> indices = {0, 2, 1, 0, 3, 2};
     rectangleMesh.m_indices = indices;
     
+    rectangleMesh.m_useContainer = false;
     rectangleMesh.m_container.SetTrianglesPerNode(2);
     rectangleMesh.m_container.BuildBVH();
 
     return rectangleMesh;
 };
 
-//FIXME: Just read a file of a sphere, cba to generate one rn 
 Mesh Mesh::SphereMesh() {
-    Mesh empty;
-    return empty;
+    Mesh sphere = ReadFile("./Models/Sphere.obj").back();
+    return sphere;
 };
 
 std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {

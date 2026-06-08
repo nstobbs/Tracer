@@ -25,9 +25,9 @@ void Transform::build() {
     if (isDirty()) {
         Matrix4 mat(1.0f);
         auto translate = glm::translate(mat, m_translate);
-        auto rotationX = glm::rotate(translate, m_rotation.x, Vector3(1.0f, 0.0f, 0.0f)); /* Rotate on X*/
-        auto rotationY = glm::rotate(rotationX, m_rotation.y, Vector3(0.0f, 1.0f, 0.0f)); /* Rotate on Y*/
-        auto rotationZ = glm::rotate(rotationY, m_rotation.z, Vector3(0.0f, 0.0f, 1.0f)); /* Rotate on Z*/
+        auto rotationX = glm::rotate(translate, glm::radians(m_rotation.x), Vector3(1.0f, 0.0f, 0.0f)); /* Rotate on X*/
+        auto rotationY = glm::rotate(rotationX, glm::radians(m_rotation.y), Vector3(0.0f, 1.0f, 0.0f)); /* Rotate on Y*/
+        auto rotationZ = glm::rotate(rotationY, glm::radians(m_rotation.z), Vector3(0.0f, 0.0f, 1.0f)); /* Rotate on Z*/
         auto scale = glm::scale(rotationZ, m_scale);
         
         /* Set Matrix */
