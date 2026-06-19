@@ -58,10 +58,9 @@ private:
     void updateLastVerion(); /* Updates the Last Versions with the Currect Versions */ 
     Layer* GetTargetLayer() const { return m_image->GetLayer(m_targetLayer); }
 
-    Color4 processLights(LightFilterRecord& record, const Ray& ray, const HitInfo& info, u64& depth) const;
+    Color4 renderLightSourceShapes(const Ray& ray) const;
+    Color4 calculateLightSources(LightFilterRecord& record, const Ray& ray, const HitInfo& info, u64& depth) const;
     void CalculatePixelColor(u32 x, u32 y) const;
-
-    Vector3 SampleSquare() const;
 
     u32 m_samplesPerPixel = {1};
     u32 m_tileSize = {32};

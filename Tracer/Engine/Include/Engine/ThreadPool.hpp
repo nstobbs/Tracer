@@ -28,9 +28,10 @@ public:
 
     void sumbitTask(std::function<void()> task);
     void clearQueue();
-    void abortCurrent();
 
-    bool isRendering() const;
+    void abort(bool value);
+    const bool isAborting() const; /* Early Check in tasks to check if an abort has been requested from the pool. */
+    bool isRendering() const; /* Check the Status of all the Threads in a Pool */
 
     void setStartingQueueSize(u32 size) { m_startingQueueSize = size; }
     u32 runningThreadCount() const;
@@ -48,6 +49,7 @@ private:
     PoolMode m_mode = {PoolMode::eInvalid};
 
     std::vector<std::atomic<bool>> m_renderingState;
+    std::atomic<bool> m_aborting;
 };
 
 }

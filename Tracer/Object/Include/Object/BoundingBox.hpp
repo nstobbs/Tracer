@@ -12,7 +12,9 @@ public:
 
     void Expand(Point3 point);
 
+    /* Returns true if hit, also records the distance via a f32* in outDistance */
     bool isHit(const Ray& ray) const;
+    f32 distance(const Ray& ray) const;
 
     Point3 Max() const { return m_max; }
     Point3 Min() const { return m_min; }

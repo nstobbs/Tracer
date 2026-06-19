@@ -29,10 +29,10 @@ public:
     // So having virtual setters and getters means that we can pass the correct
     // one betweens to two class.
 
-    virtual void setSurface(Surface* surface) { m_surface = surface; }
+    void setSurface(Surface* surface) { m_surface = surface; }
     Surface* surface() const { return m_surface; }
 
-    BBox bbox() const { return m_bbox; };
+    virtual BBox bbox() const { return m_bbox; };
     virtual Transform& transform() { return m_transform; }
 
 protected:

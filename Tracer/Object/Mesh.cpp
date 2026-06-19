@@ -16,40 +16,34 @@ namespace {
 namespace Tracer {
 
 Mesh::Mesh() {
-    m_container = BVH::MeshContainer(this);
+    m_container = BVH::MeshContainer(BVH::Algorithm::eSurfaceAreaHeuristic, this);
 }
 
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
     auto localRay = m_transform.transformRay(ray);
-    std::vector<BVH::MeshNode> nodes;
-    if (m_useContainer) {
-        /* Find All of the Triangles to Render from the BVH */
-        nodes = m_container.FindAllHitNodes(localRay);
-    } else {
-        nodes = m_container.AllNodes();
-    }
+    
+    /* Find All of the Triangles to Render from the BVH */
+    auto testableContainer = m_container.FindAllHitNodes(localRay);
 
-    /* Report the highest Node Count */
-#if 1
-    if (nodes.size() > highestNodeCount) {
-        highestNodeCount = nodes.size();
-        std::printf("New Highest Node Count Seen: %i\n", highestNodeCount);
-    }
-#endif
-    //auto nodes = m_container.AllNodes();
-    for (auto node : nodes) {
-        if (node.indices.empty()) {
+    while (!testableContainer.finished()) {
+        const auto& node = testableContainer.next();
+
+        if(!node) {
             continue;
-        };
+        }
 
-        assert(node.indices.size() % 3 == 0);
-        u64 triangleCount = node.indices.size() / 3;
+        if (node->indices.empty()) {
+            continue;
+        }
+
+        assert(node->indices.size() % 3 == 0);
+        u64 triangleCount = node->indices.size() / 3;
         for (u64 i = 0; i < triangleCount; i++) {
             /* Get Triangle Vertices */
             const u64 triangleIndex = 3 * i;
-            Vertex v0 = m_vertices.at(node.indices.at(triangleIndex));
-            Vertex v1 = m_vertices.at(node.indices.at(triangleIndex+1));
-            Vertex v2 = m_vertices.at(node.indices.at(triangleIndex+2));
+            Vertex v0 = m_vertices.at(node->indices.at(triangleIndex));
+            Vertex v1 = m_vertices.at(node->indices.at(triangleIndex+1));
+            Vertex v2 = m_vertices.at(node->indices.at(triangleIndex+2));
 
             /* Generate Geometric Normals */
             Vector3 edge0 = v1.position - v0.position;
@@ -128,11 +122,18 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
             hitInfo.extra.triangle.v0 = v0;
             hitInfo.extra.triangle.v1 = v1;
             hitInfo.extra.triangle.v2 = v2;
-            
+
             auto localInfo = m_transform.transformHitInfo(hitInfo, ray);
             hitInfo = localInfo;
+            testableContainer.record();
         }
     }
+
+#if 0 /* Report the TestableContainer Tested Count */
+    i32 testedCount = static_cast<i32>(testableContainer.testedCount());
+    i32 nodeCount = static_cast<i32>(testableContainer.nodeCount());
+    std::printf("TestableContainer: Out of %i nodes, %i was tested\n", nodeCount, testedCount);
+#endif
     return hitInfo.hasHit;
 };
 
@@ -230,9 +231,8 @@ Mesh Mesh::RetangleMesh() {
 
     std::vector<u64> indices = {0, 2, 1, 0, 3, 2};
     rectangleMesh.m_indices = indices;
-    
-    rectangleMesh.m_useContainer = false;
-    rectangleMesh.m_container.SetTrianglesPerNode(2);
+
+    rectangleMesh.m_container.SetTrianglesPerNode(7);
     rectangleMesh.m_container.BuildBVH();
 
     return rectangleMesh;
@@ -327,7 +327,7 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
             }
             // Calculate TrianglesPerNode Based of Index Count and Node Max Limit
             auto targetSize = meshObject.m_indices.size() / 128; //FIXME: Get the Node Limit from the MeshContainer...
-            meshObject.m_container.SetTrianglesPerNode(3);
+            meshObject.m_container.SetTrianglesPerNode(7);
             meshObject.m_container.BuildBVH();
             outputScene.push_back(meshObject);
         }

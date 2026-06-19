@@ -47,7 +47,16 @@ bool ThreadPool::isRendering() const {
     return false;
 }
 
+void ThreadPool::abort(bool value) {
+    m_aborting.store(value, std::memory_order_release);
+}
+
+const bool ThreadPool::isAborting() const {
+    return m_aborting.load(std::memory_order_relaxed);
+}
+
 ThreadPool::~ThreadPool() {
+    abort(true);
     {
         std::unique_lock<std::mutex> lock(m_queue_mutex);
         m_stop = true;
@@ -96,8 +105,5 @@ f32 ThreadPool::progress() const {
     return inProgressCount / static_cast<f32>(m_startingQueueSize); 
 }
 
-void ThreadPool::abortCurrent() {
-
-};
 
 }

@@ -1,10 +1,13 @@
 #include "Application/Application.hpp"
 
-#include "Object/Light.hpp"
-#include "Object/Mesh.hpp"
+#include "Surface/Wireframe.hpp"
+#include "Surface/SolidColor.hpp"
+#include "Surface/MergeSurface.hpp"
 
-#include "Surface/GeometricNormals.hpp"
 #include "Material/Material.hpp"
+
+#include "Object/LightSource.hpp"
+#include "Object/Mesh.hpp"
 
 #include <imgui.h>
 
@@ -94,45 +97,58 @@ Application::Application(ApplicationSettings settings) {
     m_camera = std::make_unique<Camera>();
 
 #if 1
-
-    //auto texture = Image::ReadImage("./Textures/1K_Test_PNG_Texture.png", "RGBA");
-    //auto textureSurface = UVTexture(&texture, "RGBA");
-    //auto wireframeSurface = Wireframe(Color4(0.5f, 0.5f, 0.5f, 0.5f));
-    //auto solidSurface = SolidColor(Color4(0.75f, 0.25f, 0.25f, 1.0f));
-    
-    auto surfaceNormalsSurface = SurfaceNormals();
-    auto geometricNormalSurface = GeometricNormals();
-    auto redSurface = SolidColor(Color4(1.0f, 0.0f, 0.0f, 1.0f));
-    auto blueSurface = SolidColor(Color4(0.0f, 0.0f, 1.0f, 1.0f));
-
-    auto material = DiffuseMaterial(Color4(1.0f, 1.0f, 1.0f, 1.0f));
-    //auto surface = MergeSurfaces(static_cast<Surface*>(&wireframeSurface), 
-    //                             static_cast<Surface*>(&surfaceNormalsSurface),
-    //                             MergeOperation::Plus);
-
+    auto material = DiffuseMaterial(Color4(0.5f, 0.5f, 0.5f, 1.0f));
     auto meshes = Mesh::ReadFile(settings.inputFile());
     for (auto& mesh : meshes) {
         mesh.setMaterial(static_cast<Material*>(&material));
-        //mesh.setSurface(static_cast<Surface*>(&blueSurface));
         m_scene->addObject(static_cast<Object*>(&mesh));
     }
 
-    //auto mesh = Mesh::RetangleMesh();
-    //mesh.setSurface(static_cast<Surface*>(&blueSurface));
-    //m_scene->addObject(static_cast<Object*>(&mesh));
+    /* Floor */
+    auto floor = Mesh::RetangleMesh();
+    floor.transform().setScale(Vector3(100.0f, 100.0f, 100.0f));
+    floor.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
+    floor.transform().setTranslate(Point3(0.0f, 0.0f, 0.0f));
+    floor.setMaterial(static_cast<Material*>(&material));
+    m_scene->addObject(static_cast<Object*>(&floor));
 
-    /* Lights */
+    /* Lighting Scene Setup */
+    auto wireframe = Wireframe(Color4(1.0f)); 
+    wireframe.setThickness(0.005f);
+
     auto redLight = AreaLight();
-    auto blueLight = AreaLight();
+    auto redColor = Color4(0.5f, 0.0f, 0.0f, 1.0f);
+    auto redSurface = SolidColor(redColor);
+    auto redWithWireframe = MergeSurfaces(static_cast<Surface*>(&wireframe),
+                                          static_cast<Surface*>(&redSurface),
+                                          MergeOperation::Plus);
+    redLight.setColor(redColor);
+    redLight.setSurface(static_cast<Surface*>(&redWithWireframe));
+    redLight.transform().setTranslate(Point3(2.5f, 4.0f, 0.0f));
+    redLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
+
     auto greenLight = AreaLight();
+    auto greenColor = Color4(0.0f, 0.5f, 0.0f, 1.0f);
+    auto greenSurface = SolidColor(greenColor);
+    auto greenWithWireframe = MergeSurfaces(static_cast<Surface*>(&wireframe),
+                                            static_cast<Surface*>(&greenSurface),
+                                            MergeOperation::Plus);
+    greenLight.setColor(greenColor);
+    greenLight.setSurface(static_cast<Surface*>(&greenWithWireframe));
+    greenLight.transform().setTranslate(Point3(0.0f, 4.0f, 0.0f));
+    greenLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
 
-    redLight.setColor(Color4(1.0f, 0.0f, 0.0f, 1.0f));
-    redLight.transform().setTranslate(Point3(2.5f, 0.0f, 0.0f));
+    auto blueLight = AreaLight();
+    auto blueColor = Color4(0.0f, 0.0f, 0.5f, 1.0f);
+    auto blueSurface = SolidColor(blueColor);
+    auto blueWithWireframe = MergeSurfaces(static_cast<Surface*>(&wireframe),
+                                           static_cast<Surface*>(&blueSurface),
+                                           MergeOperation::Plus);
+    blueLight.setColor(blueColor);
+    blueLight.setSurface(static_cast<Surface*>(&blueWithWireframe));
 
-    greenLight.setColor(Color4(0.0f, 1.0f, 0.0f, 1.0f));
-
-    blueLight.setColor(Color4(0.0f, 0.0f, 1.0f, 1.0f));
-    blueLight.transform().setTranslate(Point3(-2.5f, 0.0f, 0.0f));
+    blueLight.transform().setTranslate(Point3(-2.5f, 4.0f, 0.0f));
+    blueLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
 
     m_scene->addLightSource(static_cast<LightSource*>(&redLight));
     m_scene->addLightSource(static_cast<LightSource*>(&greenLight));
@@ -141,7 +157,7 @@ Application::Application(ApplicationSettings settings) {
 #else
 
     //auto surface = SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
-    auto surface = VertexColor();
+auto surface = VertexColor();
     auto mesh = Mesh::TriangleMesh();
     mesh.SetSurface(&surface);
     m_scene->AddObject(static_cast<Object*>(&mesh));
@@ -160,6 +176,7 @@ Application::Application(ApplicationSettings settings) {
     m_engine->SetTargetLayer(targetLayerName);
     m_engine->SetSamplesPerPixel(settings.sampleCount());
     m_engine->SetTileSize(settings.tileSize());
+    m_engine->SetMaxRayDepth(3);
     m_engine->StartRendering();
 
     m_window->setTarget(m_image->GetLayer(targetLayerName), m_camera.get());

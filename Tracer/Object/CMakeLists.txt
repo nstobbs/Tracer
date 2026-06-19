@@ -3,6 +3,7 @@ add_library(Object STATIC
     BoundingVolumeHierarchy.cpp
     Mesh.cpp
     Transform.cpp
+    LightSource.cpp
 )
 
 target_include_directories(Object PUBLIC 
@@ -14,6 +15,7 @@ find_package(assimp REQUIRED)
 
 target_link_libraries(Object
     Tracer::Core
+    Tracer::Surface
     glm::glm
     assimp::assimp
 )

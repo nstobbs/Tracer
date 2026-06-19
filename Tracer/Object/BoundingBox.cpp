@@ -38,6 +38,12 @@ bool BBox::isHit(const Ray& ray) const {
     return tMin < tMax;
 }
 
+f32 BBox::distance(const Ray& ray) const {
+    Vector3 centroid = (m_min + m_max) * Vector3(0.5f);
+    Vector3 toCenter = centroid - ray.origin;
+    return glm::dot(toCenter, ray.direction);
+}
+
 bool BBox::Contains(Point3 point) const {
     auto rangeX = Interval(static_cast<f32>(m_min.x), static_cast<f32>(m_max.x));
     auto rangeY = Interval(static_cast<f32>(m_min.y), static_cast<f32>(m_max.y));

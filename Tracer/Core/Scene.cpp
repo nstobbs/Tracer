@@ -1,5 +1,5 @@
 #include "Core/Scene.hpp"
-#include "Object/Light.hpp"
+#include "Object/LightSource.hpp"
 #include "Object/Object.hpp"
 
 namespace Tracer {
@@ -31,6 +31,16 @@ std::vector<Object*> Scene::findHitObjects(const Ray& ray) {
     for (auto& object : m_objects) {
         if (object->bbox().isHit(object->transform().transformRay(ray))) {
             found.push_back(object);
+        }
+    }
+    return found;
+}
+
+std::vector<LightSource*> Scene::findHitLightSources(const Ray& ray) {
+    std::vector<LightSource*> found;
+    for (auto& light : m_lights) {
+        if (light->bbox().isHit(light->transform().transformRay(ray))) {
+            found.push_back(light);
         }
     }
     return found;

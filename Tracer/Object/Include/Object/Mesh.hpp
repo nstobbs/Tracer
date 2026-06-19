@@ -31,7 +31,6 @@ private:
     std::vector<Vertex> m_vertices;
     std::vector<u64> m_indices;
 
-    bool m_useContainer = {true};
     BVH::MeshContainer m_container;
 
     u64 m_version = {0};

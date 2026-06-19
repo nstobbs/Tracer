@@ -10,6 +10,10 @@
 
 #define DEBUG_PRINT 1
 
+namespace {
+    const Tracer::u32 kBucketCount = 16;
+}
+
 namespace Tracer {
 
     namespace BVH {
@@ -21,11 +25,17 @@ std::array<u32, 3> MeshContainer::axisLengthOrder(BBox bbox) {
     std::multimap<f32, u32, std::greater<f32>> extentAxisMap{};
     for (u32 i = 0; i < 3; i++) {
         if (i == 0) {
-            extentAxisMap.emplace(extents.x, i);
+            if (extents.x > 1e-6f) {
+                extentAxisMap.emplace(extents.x, i);
+            }
         } else if (i == 1) {
-            extentAxisMap.emplace(extents.y, i);
+            if (extents.y > 1e-6f) {
+                extentAxisMap.emplace(extents.y, i);
+            }
         } else if (i == 2) {
-            extentAxisMap.emplace(extents.z, i);
+            if (extents.z > 1e-6f) {
+                extentAxisMap.emplace(extents.z, i);
+            }
         }
     }
 
@@ -111,28 +121,167 @@ BBox MeshContainer::calculateCentroidBBox(MeshNode& node) {
     return bbox;
 }
 
-std::pair<MeshNode, MeshNode> MeshContainer::splitNode(MeshNode& node) {
+/* Returns an vector of MeshNodes across an Given Axis */
+std::vector<MeshNode> MeshContainer::splitBBoxIntoBucketsOnAxis(MeshNode& node, const u32 axis) {
+    std::vector<MeshNode> buckets(kBucketCount);
     BBox centroidBBox = calculateCentroidBBox(node);
-    auto axisPrioOrder = axisLengthOrder(centroidBBox);
-    MeshNode nodeA{}; MeshNode nodeB{};
-    u32 attempts = 0;
-    for (auto& axis : axisPrioOrder) {
-        attempts++;
-        const auto originalIndices = node.indices;
-        transferIndicesToChildNodes(splitBBoxOnAxis(centroidBBox, axis), node, nodeA, nodeB);
-        if ((nodeA.indices.empty() || nodeB.indices.empty()) && attempts < 3) {
-            /* Copy the indices back and try again on a different axis */
-            node.indices = originalIndices;
-            continue;
-        }
+    f32 axisMin = centroidBBox.Min()[axis];
+    f32 axisLen = centroidBBox.Max()[axis] - axisMin;
 
-        if ((nodeA.indices.empty() || nodeB.indices.empty()) && attempts >= 3) {
-            node.indices = originalIndices;
-            return std::pair<MeshNode, MeshNode>(MeshNode(), MeshNode()); /* Return Emtpy */
-        }
-        return std::pair<MeshNode, MeshNode>(nodeA, nodeB); /* No issues */
+    auto triangleCount = node.indices.size() / 3;
+    for (i32 i = 0; i < triangleCount; i++) {
+        u32 triangleIndex = i * 3;
+        Point3 centroid = (m_pMesh->GetVertices().at(node.indices.at(triangleIndex)).position +
+                           m_pMesh->GetVertices().at(node.indices.at(triangleIndex+1)).position +
+                           m_pMesh->GetVertices().at(node.indices.at(triangleIndex+2)).position) / 3.0f;
+        i32 bucketIndex = static_cast<i32>(kBucketCount * (centroid[axis] - axisMin) / axisLen);
+        bucketIndex = std::clamp(bucketIndex, 0, static_cast<i32>(kBucketCount - 1));
+        buckets.at(bucketIndex).indices.push_back(node.indices.at(triangleIndex));
+        buckets.at(bucketIndex).indices.push_back(node.indices.at(triangleIndex+1));
+        buckets.at(bucketIndex).indices.push_back(node.indices.at(triangleIndex+2));
+        buckets.at(bucketIndex).bbox.Expand(centroid);
     }
-    return std::pair<MeshNode, MeshNode>(MeshNode(), MeshNode()); /* Return Emtpy */
+    return buckets;
+}
+
+/* Returns the SAH from the given index of an given Buckets.*/
+f32 MeshContainer::calculateSurfaceAreaHeuristic(std::vector<MeshNode>& nodes, const i32 index) {
+    std::vector<MeshNode> nodesA{};
+    std::vector<MeshNode> nodesB{};
+    f32 triangleCountA = 0.0f;
+    f32 triangleCountB = 0.0f;
+
+    //TODO: Maybe a cleanly way to write this with iterators 
+    for (size_t i = 0; i < nodes.size(); i++) {
+        if (nodes.at(i).indices.size() != 0) {
+            if (i < static_cast<size_t>(index)) {
+                nodesA.emplace_back(nodes.at(i));
+                triangleCountA += (static_cast<f32>(nodes.at(i).indices.size()) / 3.0f);
+            } else {
+                nodesB.emplace_back(nodes.at(i));
+                triangleCountB += (static_cast<f32>(nodes.at(i).indices.size()) / 3.0f);
+            }
+        }
+    }
+    // calculate cost function 
+    const f32 t_transval = 1.0f;
+    const f32 t_intersect = 2.0f;
+
+    f32 volumeA = 0.0f;
+    for (const auto& node : nodesA) {
+        auto extend = node.bbox.Min() - node.bbox.Max();
+        volumeA += 2.0f * (extend.x * extend.y +  extend.y * extend.z + extend.z * extend.x);
+    }
+
+    f32 volumeB = 0.0f;
+    for (const auto& node : nodesB) {
+        auto extend = node.bbox.Min() - node.bbox.Max();
+        volumeB += 2.0f * (extend.x * extend.y +  extend.y * extend.z + extend.z * extend.x);
+    }
+
+    f32 volumeSource = 0.0f;
+    for (const auto& node : nodes) {
+        auto extend = node.bbox.Min() - node.bbox.Max();
+        volumeSource += 2.0f * (extend.x * extend.y +  extend.y * extend.z + extend.z * extend.x);
+    }
+
+    f32 pA = volumeA / volumeSource;
+    f32 pB = volumeB / volumeSource;
+
+    f32 cost = t_transval + (pA * (t_intersect*triangleCountA)) + (pB * (t_intersect*triangleCountB));
+    return cost;
+};
+
+/* Combines a vector of MeshNodes into one MeshNode */
+MeshNode MeshContainer::combineMeshNodes(std::vector<MeshNode> nodes) {
+    MeshNode output{};
+    for (auto& node : nodes) {
+        for (auto& index : node.indices) {
+            Vertex v = m_pMesh->GetVertices().at(index);
+            output.bbox.Expand(v.position);
+            output.indices.emplace_back(index);
+        }
+    }
+    return output;
+}
+
+std::pair<MeshNode, MeshNode> MeshContainer::splitNode(MeshNode& node) {
+    if (m_algorithm == Algorithm::eObjectMedian){
+        BBox centroidBBox = calculateCentroidBBox(node);
+        auto axisPrioOrder = axisLengthOrder(centroidBBox);
+        MeshNode nodeA{}; MeshNode nodeB{};
+        u32 attempts = 0;
+        for (auto& axis : axisPrioOrder) {
+            attempts++;
+            const auto originalIndices = node.indices;
+            transferIndicesToChildNodes(splitBBoxOnAxis(centroidBBox, axis), node, nodeA, nodeB);
+            if ((nodeA.indices.empty() || nodeB.indices.empty()) && attempts < axisLengthOrder(centroidBBox).size()) {
+                /* Copy the indices back and try again on a different axis */
+                node.indices = originalIndices;
+                continue;
+            }
+
+            if ((nodeA.indices.empty() || nodeB.indices.empty()) && attempts >= axisLengthOrder(centroidBBox).size()) {
+                node.indices = originalIndices;
+                return std::pair<MeshNode, MeshNode>(MeshNode(), MeshNode()); /* Return Emtpy */
+            }
+            return std::pair<MeshNode, MeshNode>(nodeA, nodeB); /* No issues */
+        }
+        return std::pair<MeshNode, MeshNode>(MeshNode(), MeshNode()); /* Return Emtpy */
+    } else if (m_algorithm == Algorithm::eSurfaceAreaHeuristic) {
+        /* Split the axis in n buckets */
+        u32 attempts = 0;
+        BBox centroidBBox = calculateCentroidBBox(node);
+        for (const auto& axis : axisLengthOrder(centroidBBox)) {
+            attempts++;
+            const auto originalIndices = node.indices;
+            auto buckets = splitBBoxIntoBucketsOnAxis(node, axis);
+            /* loop over buckets and run the cost function of each spilt line */
+            f32 bestCost;
+            i32 bestIndex = -1;
+            for (i32 index = 1; index < kBucketCount - 1; index++){
+                if (index == 1) {
+                    bestCost = calculateSurfaceAreaHeuristic(buckets, index);
+                    bestIndex = index;
+                } else {
+                    /* record the best cost function results */
+                    auto cost = calculateSurfaceAreaHeuristic(buckets, index);
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestIndex = index;
+                    }
+                }
+            }
+            /* Create the two MeshNodes */
+            MeshNode nodeA{}; MeshNode nodeB{};
+            std::vector<MeshNode> groupA{}; std::vector<MeshNode> groupB{};
+            if (bestIndex != -1) {
+                //TODO: Maybe a cleanly way to write this with iterators 
+                for (size_t i = 0; i < buckets.size(); i++) {
+                    if (i < static_cast<size_t>(bestIndex)) {
+                        groupA.emplace_back(buckets.at(i));
+                    } else {
+                        groupB.emplace_back(buckets.at(i));
+                    }
+                }
+                nodeA = combineMeshNodes(groupA);
+                nodeB = combineMeshNodes(groupB);
+
+                if ((nodeA.indices.empty() || nodeB.indices.empty()) && attempts < axisLengthOrder(centroidBBox).size()) {
+                    /* Copy the indices back and try again on a different axis */
+                    node.indices = originalIndices;
+                    continue;
+                }
+
+                if ((nodeA.indices.empty() || nodeB.indices.empty()) && attempts >= axisLengthOrder(centroidBBox).size()) {
+                    node.indices = originalIndices;
+                    return std::pair<MeshNode, MeshNode>(MeshNode(), MeshNode()); /* Return Emtpy */
+                }
+
+                return std::pair<MeshNode, MeshNode>(nodeA, nodeB);
+            }
+        }
+    }
 }
 
 void MeshContainer::BuildBVH() {
@@ -197,36 +346,82 @@ void MeshContainer::BuildBVH() {
 
 };
 
-std::vector<MeshNode> MeshContainer::FindAllHitNodes(const Ray& ray) const {
-    std::vector<MeshNode> results;
-    auto findNodes = [&](auto& self,const Ray& ray, MeshNode node) -> void {
-        if (node.leftIndex == -1 && node.rightIndex == -1) {
-            results.push_back(node);
+TestableContainer MeshContainer::FindAllHitNodes(const Ray& ray) const {
+    std::map<f32, const MeshNode*> found{};
+    auto findNodes = [&](auto& self,const Ray& ray, const MeshNode* node) -> void {
+        if (node->leftIndex == -1 && node->rightIndex == -1) {
+            found.emplace(node->bbox.distance(ray), node);
             return;
         }
         
-        if (node.leftIndex != -1) {
-            if (m_nodes.at(node.leftIndex).bbox.isHit(ray)) {
-                self(self, ray, m_nodes.at(node.leftIndex));
+        if (node->leftIndex != -1) {
+            if (m_nodes.at(node->leftIndex).bbox.isHit(ray)) {
+                self(self, ray, &m_nodes.at(node->leftIndex));
             }
         }
 
-        if (node.rightIndex != -1) {
-            if (m_nodes.at(node.rightIndex).bbox.isHit(ray)) {
-                self(self, ray, m_nodes.at(node.rightIndex));
+        if (node->rightIndex != -1) {
+            if (m_nodes.at(node->rightIndex).bbox.isHit(ray)) {
+                self(self, ray, &m_nodes.at(node->rightIndex));
             }
         }
     };
 
+    const MeshNode* root = &m_nodes.front();
+
     if (m_nodes.front().bbox.isHit(ray)) {
-        findNodes(findNodes, ray, m_nodes.front());
+        findNodes(findNodes, ray, root);
     }
-    return results;
+    return TestableContainer(found);
 }
 
 void MeshContainer::SetTrianglesPerNode(u32 triangleCount) {
     m_trianglesPerNode = triangleCount;
 };
+
+/* TestableContainer */
+
+TestableContainer::TestableContainer(std::map<f32, const MeshNode*> foundNodes) : m_found(foundNodes) {
+    m_distanceThreshold = std::numeric_limits<f32>::max();
+    m_rng = std::mt19937(std::random_device{}());
+    m_nodeCount = foundNodes.size();
+}
+
+ /* Returns an random MeshNode to test.*/
+const MeshNode* TestableContainer::next() {
+    if (m_testedCount != 0) {
+        m_found.erase(m_currentDistance);
+    }
+
+    cutoff();
+
+    if (m_found.empty()) {
+        return {};
+    }
+
+    //std::uniform_int_distribution<size_t> dist(0, m_found.size() - 1);
+    auto it = m_found.begin();
+    //std::advance(it, dist(m_rng));
+
+    m_testedCount++;
+
+    m_currentDistance = it->first;
+    return it->second;
+} 
+/* Returns true if there is nothing else left to test.*/
+const bool TestableContainer::finished() {
+    return m_found.empty();
+}
+
+/* If the current node did hit, record that distance */
+void TestableContainer::record() {
+    m_distanceThreshold = m_currentDistance;
+}
+
+void TestableContainer::cutoff() {
+    auto cutoff = m_found.upper_bound(m_distanceThreshold);
+    m_found.erase(cutoff, m_found.end());
+}
 
 }
 }

@@ -1,8 +1,8 @@
 #include "Core/StatusMessage.hpp"
 #include "Engine/Engine.hpp"
-#include "Surface/Wireframe.hpp"
+
 #include "Material/Material.hpp"
-#include "Object/Light.hpp"
+#include "Object/LightSource.hpp"
 
 #include <cmath>
 #include <chrono>
@@ -77,11 +77,13 @@ void Engine::SetActiveTilesRecord(ActiveTilesRecord* activeList) {
 
 void Engine::StartRendering() {
     m_isRunning = true;
+    m_pool->abort(false);
     StatusMessage::Set("Tracer::Engine: Started Rendering.");
 }
 
 void Engine::StopRendering() {
     m_isRunning = false;
+    m_pool->abort(true);
     m_pool->clearQueue();
     StatusMessage::Set("Tracer::Engine: Stopped Render.");
 }
@@ -147,6 +149,9 @@ void Engine::RenderTile(u32 x, u32 y) {
     std::mt19937 rng(std::random_device{}());
     std::shuffle(pixelCoords.begin(), pixelCoords.end(), rng);
     for (auto& [x, y] : pixelCoords) {
+        if (m_pool->isAborting()) {
+            continue;;
+        }
         CalculatePixelColor(x, y);
     }
 
@@ -159,7 +164,22 @@ void Engine::RenderTile(u32 x, u32 y) {
     }
 }
 
-Color4 Engine::processLights(LightFilterRecord& record, const Ray& ray, const HitInfo& info, u64& depth) const {
+Color4 Engine::renderLightSourceShapes(const Ray& ray) const {
+    Color4 color{};
+    for (const auto& lightSource : m_scene->findHitLightSources(ray)) {
+        HitInfo info{};
+        if (lightSource->isHit(ray, info, Interval())) {
+            color += lightSource->calculateSurface(info);
+        }
+    }
+    return color;
+}
+
+Color4 Engine::calculateLightSources(LightFilterRecord& record, const Ray& ray, const HitInfo& info, u64& depth) const {
+    if (m_pool->isAborting()) {
+        return {};
+    }
+
     if (depth == m_maxRayDepth) {
         return m_missedColor; /* Max Ray Depth was Reached */
     } else {
@@ -174,7 +194,7 @@ Color4 Engine::processLights(LightFilterRecord& record, const Ray& ray, const Hi
             depth++;
             if (info.object->material()->scatter(ray, info, scatted)) {
                 /* Check if we hit a LightSource */
-                for (auto const& light : m_scene->lightSources()) {
+                for (auto const& light : m_scene->findHitLightSources(scatted)) {
                     if (light->isHit(scatted, scattedInfo, Interval())) {
                         return Color4(light->applyRecord(record), 1.0f); /* Hit a LightSource */
                     }
@@ -195,7 +215,7 @@ Color4 Engine::processLights(LightFilterRecord& record, const Ray& ray, const Hi
                 }
 
                 if (frontInfo.object){
-                    processLights(record, scatted, frontInfo, depth); /* Hit an Object */
+                    calculateLightSources(record, scatted, frontInfo, depth); /* Hit an Object */
                 }
             }
         }
@@ -209,14 +229,20 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         return;
     }
 
-    auto color = m_missedColor;
-    // FIXME: Pre adjusting before sample div later.
-    color.x *= m_samplesPerPixel;
-    color.y *= m_samplesPerPixel;
-    color.z *= m_samplesPerPixel;
+    /* Clear Screen */
+    if (m_targetLayer != "eInvalid") {
+        auto& dest = m_image->GetLayer(m_targetLayer)->at(x, y);
+        dest = m_missedColor;
+    }
 
     /* Render Per Samples */
     for (i32 sample = 0; sample < m_samplesPerPixel; sample++) {
+        if (m_pool->isAborting()) {
+            return;
+        }
+
+        auto color = m_missedColor / Color4(m_samplesPerPixel); /* Starting Pixel Color*/
+
         /* Get Ray */
         Ray ray = m_camera->GetRay(*m_image, x, y);
         HitInfo info{};
@@ -227,8 +253,7 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         frontInfo.distance = Interval().Max();
 
         /* Find Closest Object */
-        const auto& objects = m_scene->findHitObjects(ray);
-        for (const auto& object : objects) {
+        for (const auto& object : m_scene->findHitObjects(ray)) {
             if (object->isHit(ray, info, Interval())) {
                 if (info.distance < frontInfo.distance) {
                     frontObject = object;
@@ -237,29 +262,24 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
             };
         }
 
+        /* If we didn't hit any objects, check if we hit a light source */
+        if (!frontInfo.object) {
+            color += renderLightSourceShapes(ray) / Color4(m_samplesPerPixel);
+        }
+
         /* Calculate Lighting */
         if (frontInfo.object) {
             LightFilterRecord record = LightFilterRecord(false);
             u64 depth = 0;
-            color += processLights(record, ray, frontInfo, depth);
-            //color += frontInfo.object->surface()->CalculateColor(frontInfo);
+            color += calculateLightSources(record, ray, frontInfo, depth);
+        }
+
+        /* Write to ImageLayer*/
+        if (m_targetLayer != "eInvalid") {
+            auto& dest = m_image->GetLayer(m_targetLayer)->at(x, y);
+            dest = dest + color;
         }
     }
-
-    color.r = color.r / m_samplesPerPixel;
-    color.g = color.g / m_samplesPerPixel;
-    color.b = color.b / m_samplesPerPixel;
-    color.a = color.a / m_samplesPerPixel;
-
-    /* Write to ImageLayer*/
-    if (m_targetLayer != "eInvalid") {
-        auto& dest = m_image->GetLayer(m_targetLayer)->at(x, y);
-        dest = color;
-    }
-}
-
-Vector3 Engine::SampleSquare() const {
-    return Vector3(0.0f);
 }
 
 }

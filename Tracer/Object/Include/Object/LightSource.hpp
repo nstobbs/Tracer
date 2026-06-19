@@ -19,24 +19,12 @@ class LightFilterRecord {
 public:
     LightFilterRecord(bool fromLightSource) : m_fromLightSource(fromLightSource) { ; }
     ~LightFilterRecord() = default;
-
     /* Returns if the Record is built from a incoming LightSource */
-    const bool isComingFromLightSource() const {
-        return m_fromLightSource;
-    }
-
+    const bool isComingFromLightSource() const;
     /* Returns the a Color3 from all of the LightFilterEvents */
-    const Color3 collapse() const {
-        auto output = Color3(1.0f);
-        for (auto event : m_events) {
-            output *= event.lightEvent;
-        }
-        return output;
-    } 
+    const Color3 collapse() const; 
+    void push(LightFilterEvent& event);
 
-    void push(LightFilterEvent& event) {
-        m_events.push_back(event);
-    }
     /* Returns a new LightFilterRecord by combining two LightFilterRecord together. */
     static LightFilterRecord CombineLightFilerRecords(LightFilterRecord toLightSource, LightFilterRecord fromLightSource);
 private:
@@ -48,10 +36,16 @@ private:
 /* LightSource - Base Class for Lighting Objects  */
 class LightSource : public Object {
 public:
+
     virtual Ray fireRay() const = 0;
     virtual Color3 applyRecord(const LightFilterRecord& record) const = 0;
-    void setColor(const Color4 color) { m_color = color; }
+    void setColor(const Color3 color) { m_color = color; }
     void setIntensity(const f32 value) { m_intensity = value; }
+
+    virtual Color4 calculateSurface(const HitInfo& info) const = 0;
+
+    Color3 color() const { return m_color; }
+    f32 intensity() const { return m_intensity; }
 
 protected:
     Color3 m_color;
@@ -61,36 +55,18 @@ protected:
 /* AreaLight - A rectangle LightSource */
 class AreaLight : public LightSource {
 public:
-    AreaLight() {
-        m_mesh = Mesh::RetangleMesh();
-        m_color = Color3(1.0f, 1.0f, 1.0f);
-        m_intensity = 10.0f;
-        m_bbox = m_mesh.bbox();
-    }
+    AreaLight();
     /* LightSource Virtual Functions */
-    Ray fireRay() const override {
-        /* https://articles.alexcastronovo.com/article/1/a-simple-efficient-and-unbaised-approach-to-uniformly-sampling-a-mesh */
-        return Ray();// TODO: Implement for Next Event Estimation
-    }
-
+    Ray fireRay() const override;
     /* Applies the LightEventRecord to the LightSource and returns the final pixel color. */
-    Color3 applyRecord(const LightFilterRecord& record) const override {
-        return m_color * record.collapse();
-    }
+    Color3 applyRecord(const LightFilterRecord& record) const override;
 
     /* Object Virtual Functions */
-    bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) override {
-        return m_mesh.isHit(ray, hitInfo, interval);
-    }
-
-    void setSurface(Surface* surface) override
-    { 
-        m_mesh.setSurface(surface);
-    }
-
-    Transform& transform() override {
-        return m_mesh.transform();
-    }
+    bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) override;
+    Color4 calculateSurface(const HitInfo& info) const override;
+    
+    BBox bbox() const override { return m_mesh.bbox(); }
+    Transform& transform() override { return m_mesh.transform(); }
 
 private:
     Mesh m_mesh;
@@ -98,6 +74,7 @@ private:
 
 /* DomeLight - A sphere LightSource that emitter rays from outside in.
     Normally used as a SkyDome with HDRI Textures */
+//TODO: Move into LightSource.cpp
 class DomeLight : public LightSource {
 public:
     DomeLight() {

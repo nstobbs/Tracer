@@ -1,10 +1,11 @@
-add_library(Material INTERFACE)
+add_library(Material STATIC
+    Material.cpp)
 
 target_include_directories(Material INTERFACE 
         ${CMAKE_CURRENT_SOURCE_DIR}/Include
 )
 
-target_link_libraries(Material INTERFACE
+target_link_libraries(Material PUBLIC
     Tracer::Core
     Tracer::Object
     Tracer::Surface

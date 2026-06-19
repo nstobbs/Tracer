@@ -23,7 +23,9 @@ public:
     
     u64 version() const { return m_version; }
 
-    std::vector<Object*> findHitObjects(const Ray& ray); /* Returns all Objects that BBox intersect with the incoming ray.*/
+    /* Returns all Objects or LightSources that BBox intersect with the incoming ray.*/
+    std::vector<Object*> findHitObjects(const Ray& ray);
+    std::vector<LightSource*> findHitLightSources(const Ray& ray); 
 
 protected:
     u64 m_version = {0};

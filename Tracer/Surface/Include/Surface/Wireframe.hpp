@@ -1,3 +1,4 @@
+#pragma once
 #include "Surface/Surface.hpp"
 
 namespace Tracer {
@@ -23,6 +24,7 @@ public:
         };
         return output;
     }
+    void setThickness(f32 value) { m_lineThickness = value; }
 private:
     Color4 m_color;
     f32 m_lineThickness = {0.05f};

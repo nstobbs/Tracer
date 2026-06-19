@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Surface/Surface.hpp"
 
 #include <algorithm>
