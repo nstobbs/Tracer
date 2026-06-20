@@ -22,10 +22,16 @@ class TracerConan(ConanFile):
     def generate(self):
         copy(self, "imgui_impl_sdl2*", 
              os.path.join(self.dependencies["imgui"].package_folder, "res", "bindings"),
-             os.path.join(self.source_folder, "Application", "Window", "bindings"))
+             os.path.join(self.source_folder, "Application", "Window", "imgui_bindings"))
         copy(self, "imgui_impl_opengl3*",
              os.path.join(self.dependencies["imgui"].package_folder, "res", "bindings"),
-             os.path.join(self.source_folder, "Application", "Window", "bindings"))
+             os.path.join(self.source_folder, "Application", "Window", "imgui_bindings"))
+        copy(self, "*.h",
+             os.path.join(self.dependencies["imgui"].package_folder, "res", "misc", "cpp"),
+             os.path.join(self.source_folder, "Application", "Window", "imgui_misc"))
+        copy(self, "*.cpp",
+             os.path.join(self.dependencies["imgui"].package_folder, "res", "misc", "cpp"),
+             os.path.join(self.source_folder, "Application", "Window", "imgui_misc"))
 
     def layout(self):
         cmake_layout(self)

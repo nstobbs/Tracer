@@ -33,6 +33,7 @@ public:
     void DrawTestPatten(TestPatten type);
     i32 GetRowCount();
     std::vector<Color4>& GetRow(u32 index);
+    std::vector<Row>& data() { return m_data; }
 
 protected:
     std::vector<Row> m_data;
@@ -51,6 +52,7 @@ public:
     u32 GetHeight() const { return m_height; };
 
     static Image ReadImage(const std::string& filepath, const std::string& layerName);
+    void WriteImage(const std::string& filepath); /* Writes a EXR File */
 protected:
     u32 m_width;
     u32 m_height;

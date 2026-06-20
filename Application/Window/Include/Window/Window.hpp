@@ -51,6 +51,9 @@ private:
 
 	Engine* m_engine = {nullptr};
 
+	/* imGui Resources*/
+	std::string m_ImageOutFilepath = {"./Output/test_v001.exr"};
+
 	/* Window Info */
 	i32 m_width;
 	i32 m_height;

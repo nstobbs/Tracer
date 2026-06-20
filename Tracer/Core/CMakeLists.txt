@@ -14,6 +14,7 @@ find_package(glm REQUIRED)
 target_link_libraries(Core
     stb
     glm::glm
+    tinyexr::tinyexr
     Tracer::Object
 )
 

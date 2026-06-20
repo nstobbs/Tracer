@@ -28,7 +28,30 @@ enum class Algorithm {
     eSurfaceAreaHeuristic = 1 /* Uses a Cost Function to Find the Best Cut on the Longest Axis.*/
 };
 
-class TestableContainer;
+/* @class TestableContainer
+   @brief Reduces the numbers of tests required 
+   to find the closest prim with an given 
+*/
+class TestableContainer {
+public:
+    TestableContainer(std::map<f32, const MeshNode*> foundNodes);
+    const MeshNode* next(); /* Returns an random MeshNode to test.*/
+    const bool finished(); /* Returns true if there is nothing else left to test.*/
+    void record(); /* If the current node did hit, record that distance */
+
+    u32 testedCount() const { return m_testedCount; }
+    u32 nodeCount() const { return m_nodeCount;}
+
+private:
+    void cutoff();
+    std::map<f32, const MeshNode*>  m_found; /* Key: Distance, Value: MeshNode&  */
+    f32 m_distanceThreshold;
+    std::mt19937 m_rng;
+
+    f32 m_currentDistance = {0.0f};
+    u32 m_testedCount = {0};
+    u32 m_nodeCount = {0};
+};
 
 /* MeshContainer handles the building and store of a given Mesh. */
 class MeshContainer {
@@ -70,31 +93,6 @@ private:
     std::vector<MeshNode> m_nodes;
     u32 m_trianglesPerNode = {3};
     i32 m_depthCount = {0};
-};
-
-/* @class TestableContainer
-   @brief Reduces the numbers of tests required 
-   to find the closest prim with an given 
-*/
-class TestableContainer {
-public:
-    TestableContainer(std::map<f32, const MeshNode*> foundNodes);
-    const MeshNode* next(); /* Returns an random MeshNode to test.*/
-    const bool finished(); /* Returns true if there is nothing else left to test.*/
-    void record(); /* If the current node did hit, record that distance */
-
-    u32 testedCount() const { return m_testedCount; }
-    u32 nodeCount() const { return m_nodeCount;}
-
-private:
-    void cutoff();
-    std::map<f32, const MeshNode*>  m_found; /* Key: Distance, Value: MeshNode&  */
-    f32 m_distanceThreshold;
-    std::mt19937 m_rng;
-
-    f32 m_currentDistance = {0.0f};
-    u32 m_testedCount = {0};
-    u32 m_nodeCount = {0};
 };
 
 };

@@ -1,6 +1,8 @@
-/Application/Window/bindings/*
+/Application/Window/imgui_bindings/*
+/Application/Window/imgui_misc/*
 /.vs/*
 /.vscode/*
 /CMakeUserPresets.json
 /build/*
 /devenv/*
+/Output/*

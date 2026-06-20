@@ -3,6 +3,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr.h"
+
+#include <algorithm> 
+
 namespace Tracer {
 
 /* Tracer::Layer */
@@ -107,6 +112,87 @@ Image Image::ReadImage(const std::string& filepath, const std::string& layerName
     }
     stbi_image_free(pixels);
     return output;
+};
+
+void Image::WriteImage(const std::string& filepath) {
+    const i32 numberOfChannels = static_cast<i32>(m_layerNames.size() * 4); /* Every Layer uses a RGBA Color4 */
+    const i32 numberOfLayers = static_cast<i32>(m_layerNames.size());
+    
+    EXRHeader header;
+    InitEXRHeader(&header);
+
+    EXRImage image;
+    InitEXRImage(&image);
+    image.num_channels = numberOfChannels;
+    image.width = static_cast<i32>(m_width);
+    image.height = static_cast<i32>(m_height);
+
+    /* De-interweave layers and prep ChannelInfos */
+     struct ChannelInfo
+    {
+        std::string name;
+        void* data;
+    };
+
+    std::vector<ChannelInfo> channelInfos;
+    std::vector<f32> redChannels((m_width * m_height) * numberOfLayers);
+    std::vector<f32> greenChannels((m_width * m_height) * numberOfLayers);
+    std::vector<f32> blueChannels((m_width * m_height) * numberOfLayers);
+    std::vector<f32> alphaChannels((m_width * m_height) * numberOfLayers);
+
+    i32 channelIndex = 0;
+    i32 pixelIndex = 0;
+    for (auto& [layerName, layer] : m_layers) {
+        for (const auto& row : layer.data()) {
+            for (const auto& pixel : row) {
+                redChannels[pixelIndex] = pixel.r;
+                greenChannels[pixelIndex] = pixel.g;
+                blueChannels[pixelIndex] = pixel.b;
+                alphaChannels[pixelIndex] = pixel.a;
+                pixelIndex++;
+            }
+        }
+        channelInfos.push_back({layerName + ".R", &redChannels[channelIndex]});
+        channelInfos.push_back({layerName + ".G", &greenChannels[channelIndex]});
+        channelInfos.push_back({layerName + ".B", &blueChannels[channelIndex]});
+        channelInfos.push_back({layerName + ".A", &alphaChannels[channelIndex]});
+        channelIndex++;
+    }
+
+    /* Sort into Alphabetically Order */
+    std::sort(channelInfos.begin(), channelInfos.end(), [](const ChannelInfo& lhs, const ChannelInfo& rhs){
+        return lhs.name < rhs.name;
+    });
+
+    /* Record Image Information */
+    std::vector<int> pixelType(numberOfChannels, TINYEXR_PIXELTYPE_FLOAT);
+    std::vector<int> requestedPixelType(numberOfChannels, TINYEXR_PIXELTYPE_FLOAT);
+    std::vector<void*> imageChannelsPtrs(numberOfChannels);
+    std::vector<EXRChannelInfo> exrChannelInfos(numberOfChannels);
+
+    for (i32 i = 0; i < numberOfChannels; i++) {
+        imageChannelsPtrs[i] = channelInfos[i].data;
+        strncpy(exrChannelInfos[i].name, channelInfos[i].name.c_str(), sizeof(exrChannelInfos[i].name) - 1);
+        exrChannelInfos[i].name[sizeof(exrChannelInfos[i].name) - 1] = '\0';
+    }
+
+    image.images = reinterpret_cast<unsigned char**>(imageChannelsPtrs.data());
+    header.num_channels = numberOfChannels;
+    header.channels = exrChannelInfos.data();
+    header.pixel_types = pixelType.data();
+    header.requested_pixel_types = requestedPixelType.data();
+
+    // Write to Disk
+    const char* error = nullptr;
+    auto result = SaveEXRImageToFile(&image, &header, filepath.c_str(), &error);
+    if (result != TINYEXR_SUCCESS) {
+        if (!error) {
+            std::printf("Unkown tinyexr error!\n");
+        } else {
+            std::printf("Tinyexr Error: %s\n", error);
+            FreeEXRErrorMessage(error);
+        }
+    }
 };
 
 }

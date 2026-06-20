@@ -5,6 +5,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_opengl3.h>
+#include <imgui_stdlib.h>
 
 #include <vector>
 
@@ -195,6 +196,21 @@ void Window::renderWindow() {
     // StatusMessage 
     auto info = "Status: " + Tracer::StatusMessage::Get();
     ImGui::Text(info.c_str());
+
+    // Write Image
+    ImGui::SetNextItemWidth(300.0f);
+    ImGui::InputText(": Filepath", &m_ImageOutFilepath);
+    ImGui::SameLine();
+    if (ImGui::Button("WriteToDisk")) {
+        if (m_engine->isRendering()) {
+            StatusMessage::Set("Can't Write Image while Tracer::Engine is rendering.\n");
+        } else {
+            auto message = "Writing Image to: " + m_ImageOutFilepath + "\n";
+            StatusMessage::Set(message);
+            auto* image = m_engine->GetTargetImage();
+            image->WriteImage(m_ImageOutFilepath);
+        }
+    }
 
     ImGui::End();
     

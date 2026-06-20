@@ -43,6 +43,7 @@ public:
     u32 getMaxRayDepth() const { return m_maxRayDepth; }
     Color4 getMissedColor() const { return m_missedColor; }
     f32 getRenderProgress() const { return m_pool->progress(); }
+    bool isRendering() const { return m_pool->isRendering(); }
 
     Image* GetTargetImage() { return m_image; }
 

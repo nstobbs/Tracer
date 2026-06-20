@@ -6,8 +6,10 @@ add_library(Window STATIC
     BBoxRenderPass.cpp
     
     # ImGui Backend Bindings
-    bindings/imgui_impl_sdl2.cpp
-    bindings/imgui_impl_opengl3.cpp
+    imgui_bindings/imgui_impl_sdl2.cpp
+    imgui_bindings/imgui_impl_opengl3.cpp
+    # ImGui Misc 
+    imgui_misc/imgui_stdlib.cpp
 )
 
 find_package(SDL2 REQUIRED)
@@ -17,7 +19,8 @@ find_package(imgui REQUIRED)
 
 target_include_directories(Window PUBLIC 
         ${CMAKE_CURRENT_SOURCE_DIR}/Include
-        ${CMAKE_CURRENT_SOURCE_DIR}/bindings
+        ${CMAKE_CURRENT_SOURCE_DIR}/imgui_bindings
+        ${CMAKE_CURRENT_SOURCE_DIR}/imgui_misc
 )
 
 target_link_libraries(Window
