@@ -136,7 +136,7 @@ void BBoxRenderPass::setScene(Scene* scene) {
     m_scene = scene;
     m_bboxMatrices.clear();
     for (auto object : m_scene->objects()) {
-        auto nodes = static_cast<Mesh*>(object)->getMeshContainer()->AllNodes();
+        auto nodes = static_cast<Mesh*>(object)->MeshContainerModel()->AllNodes();
         for (auto node : nodes) {
             if (node.indices.empty() && isSkipEmptyNodesEnabled()) {
                 continue;

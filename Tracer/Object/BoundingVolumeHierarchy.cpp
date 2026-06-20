@@ -4,8 +4,8 @@
 
 #include "Core/StatusMessage.hpp"
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <map>
 
 #define DEBUG_PRINT 1
@@ -18,7 +18,7 @@ namespace Tracer {
 
     namespace BVH {
 
-std::array<u32, 3> MeshContainer::axisLengthOrder(BBox bbox) {
+std::array<u32, 3> MeshContainerModel::axisLengthOrder(BBox bbox) {
     /* Creates a Map of Axises and the Extent of that axis.
     Sorted in the order of largest extent first.      */
     Point3 extents = bbox.Max() - bbox.Min();
@@ -48,7 +48,7 @@ std::array<u32, 3> MeshContainer::axisLengthOrder(BBox bbox) {
     return output;
 };
 
-BBox MeshContainer::splitBBoxOnAxis(BBox& bbox, u32 axis) {
+BBox MeshContainerModel::splitBBoxOnAxis(BBox& bbox, u32 axis) {
     BBox halfBBox(bbox.Min(), bbox.Max());
     Point3 max = halfBBox.Max();
     assert(axis < 3); /* Catch Invalid Axis */
@@ -67,7 +67,7 @@ BBox MeshContainer::splitBBoxOnAxis(BBox& bbox, u32 axis) {
     return halfBBox;
 }
 
-void MeshContainer::transferIndicesToChildNodes(BBox anchorPoint, MeshNode& from, MeshNode& toA, MeshNode& toB) {
+void MeshContainerModel::transferIndicesToChildNodes(BBox anchorPoint, MeshNode& from, MeshNode& toA, MeshNode& toB) {
     toA.indices.clear();
     toB.indices.clear();
     
@@ -104,7 +104,7 @@ void MeshContainer::transferIndicesToChildNodes(BBox anchorPoint, MeshNode& from
     from.indices.clear();
 }
 
-BBox MeshContainer::calculateCentroidBBox(MeshNode& node) {
+BBox MeshContainerModel::calculateCentroidBBox(MeshNode& node) {
     u32 triangleCount = node.indices.size() / 3;
     BBox bbox;
     if (triangleCount != 0) {
@@ -122,7 +122,7 @@ BBox MeshContainer::calculateCentroidBBox(MeshNode& node) {
 }
 
 /* Returns an vector of MeshNodes across an Given Axis */
-std::vector<MeshNode> MeshContainer::splitBBoxIntoBucketsOnAxis(MeshNode& node, const u32 axis) {
+std::vector<MeshNode> MeshContainerModel::splitBBoxIntoBucketsOnAxis(MeshNode& node, const u32 axis) {
     std::vector<MeshNode> buckets(kBucketCount);
     BBox centroidBBox = calculateCentroidBBox(node);
     f32 axisMin = centroidBBox.Min()[axis];
@@ -145,7 +145,7 @@ std::vector<MeshNode> MeshContainer::splitBBoxIntoBucketsOnAxis(MeshNode& node, 
 }
 
 /* Returns the SAH from the given index of an given Buckets.*/
-f32 MeshContainer::calculateSurfaceAreaHeuristic(std::vector<MeshNode>& nodes, const i32 index) {
+f32 MeshContainerModel::calculateSurfaceAreaHeuristic(std::vector<MeshNode>& nodes, const i32 index) {
     std::vector<MeshNode> nodesA{};
     std::vector<MeshNode> nodesB{};
     f32 triangleCountA = 0.0f;
@@ -193,7 +193,7 @@ f32 MeshContainer::calculateSurfaceAreaHeuristic(std::vector<MeshNode>& nodes, c
 };
 
 /* Combines a vector of MeshNodes into one MeshNode */
-MeshNode MeshContainer::combineMeshNodes(std::vector<MeshNode> nodes) {
+MeshNode MeshContainerModel::combineMeshNodes(std::vector<MeshNode> nodes) {
     MeshNode output{};
     for (auto& node : nodes) {
         for (auto& index : node.indices) {
@@ -205,7 +205,7 @@ MeshNode MeshContainer::combineMeshNodes(std::vector<MeshNode> nodes) {
     return output;
 }
 
-std::pair<MeshNode, MeshNode> MeshContainer::splitNode(MeshNode& node) {
+std::pair<MeshNode, MeshNode> MeshContainerModel::splitNode(MeshNode& node) {
     if (m_algorithm == Algorithm::eObjectMedian){
         BBox centroidBBox = calculateCentroidBBox(node);
         auto axisPrioOrder = axisLengthOrder(centroidBBox);
@@ -284,7 +284,7 @@ std::pair<MeshNode, MeshNode> MeshContainer::splitNode(MeshNode& node) {
     }
 }
 
-void MeshContainer::BuildBVH() {
+void MeshContainerModel::BuildBVH() {
     // Build the Root Node
     BBox rootBBox = m_pMesh->bbox();
     auto& rootVertices = m_pMesh->GetVertices();
@@ -346,81 +346,66 @@ void MeshContainer::BuildBVH() {
 
 };
 
-TestableContainer MeshContainer::FindAllHitNodes(const Ray& ray) const {
-    std::map<f32, const MeshNode*> found{};
-    auto findNodes = [&](auto& self,const Ray& ray, const MeshNode* node) -> void {
-        if (node->leftIndex == -1 && node->rightIndex == -1) {
-            found.emplace(node->bbox.distance(ray), node);
-            return;
-        }
-        
-        if (node->leftIndex != -1) {
-            if (m_nodes.at(node->leftIndex).bbox.isHit(ray)) {
-                self(self, ray, &m_nodes.at(node->leftIndex));
-            }
-        }
-
-        if (node->rightIndex != -1) {
-            if (m_nodes.at(node->rightIndex).bbox.isHit(ray)) {
-                self(self, ray, &m_nodes.at(node->rightIndex));
-            }
-        }
-    };
-
-    const MeshNode* root = &m_nodes.front();
-
-    if (m_nodes.front().bbox.isHit(ray)) {
-        findNodes(findNodes, ray, root);
-    }
-    return TestableContainer(found);
+MeshContainerView MeshContainerModel::createMeshContainerView(const Ray& ray) const {
+    return MeshContainerView(this, ray);
 }
 
-void MeshContainer::SetTrianglesPerNode(u32 triangleCount) {
+void MeshContainerModel::SetTrianglesPerNode(u32 triangleCount) {
     m_trianglesPerNode = triangleCount;
 };
 
-/* TestableContainer */
-
-TestableContainer::TestableContainer(std::map<f32, const MeshNode*> foundNodes) : m_found(foundNodes) {
-    m_distanceThreshold = std::numeric_limits<f32>::max();
-    m_rng = std::mt19937(std::random_device{}());
-    m_nodeCount = foundNodes.size();
+/* MeshContainerView */
+MeshContainerView::MeshContainerView(const MeshContainerModel* model, const Ray& ray) : m_model(model), m_ray(ray) {
+    if (!m_model->m_nodes.empty()) {
+        m_stack.push(&m_model->m_nodes.front());
+    }
 }
 
- /* Returns an random MeshNode to test.*/
-const MeshNode* TestableContainer::next() {
-    if (m_testedCount != 0) {
-        m_found.erase(m_currentDistance);
+/* Returns an random MeshNode to test.*/
+const MeshNode* MeshContainerView::next() {
+    while (!m_stack.empty()) {
+        const MeshNode* node = m_stack.top();
+        m_stack.pop();
+
+        /* Missed */
+        if (!node->bbox.isHit(m_ray)) {
+            continue;
+        }
+
+        f32 distance = node->bbox.distance(m_ray);
+        /* Prune by Distance */
+        if (distance >= m_distanceThreshold) {
+            continue;
+        }
+
+        auto isLeaf = (node->leftIndex == -1 && node->rightIndex == -1);
+        if (isLeaf && !node->indices.empty()) {
+            m_testedCount++;
+            m_selectedDistance = distance;
+            return node; /* If the MeshNode contains an Hit, then caller calls record()*/
+        }
+
+        if (node->rightIndex != -1) {
+            m_stack.push(&m_model->m_nodes.at(node->rightIndex));
+        }
+        if (node->leftIndex!= -1) {
+            m_stack.push(&m_model->m_nodes.at(node->leftIndex));
+        }
+
     }
 
-    cutoff();
+    m_finished = true;
+    return nullptr;
+}
 
-    if (m_found.empty()) {
-        return {};
-    }
-
-    //std::uniform_int_distribution<size_t> dist(0, m_found.size() - 1);
-    auto it = m_found.begin();
-    //std::advance(it, dist(m_rng));
-
-    m_testedCount++;
-
-    m_currentDistance = it->first;
-    return it->second;
-} 
 /* Returns true if there is nothing else left to test.*/
-const bool TestableContainer::finished() {
-    return m_found.empty();
+const bool MeshContainerView::finished() {
+    return m_finished;
 }
 
 /* If the current node did hit, record that distance */
-void TestableContainer::record() {
-    m_distanceThreshold = m_currentDistance;
-}
-
-void TestableContainer::cutoff() {
-    auto cutoff = m_found.upper_bound(m_distanceThreshold);
-    m_found.erase(cutoff, m_found.end());
+void MeshContainerView::record() {
+    m_distanceThreshold = m_selectedDistance;
 }
 
 }

@@ -235,13 +235,15 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         dest = m_missedColor;
     }
 
+    auto sampleOffset = Color4(m_samplesPerPixel);
+
     /* Render Per Samples */
     for (i32 sample = 0; sample < m_samplesPerPixel; sample++) {
         if (m_pool->isAborting()) {
             return;
         }
 
-        auto color = m_missedColor / Color4(m_samplesPerPixel); /* Starting Pixel Color*/
+        auto color = m_missedColor / sampleOffset; /* Starting Pixel Color*/
 
         /* Get Ray */
         Ray ray = m_camera->GetRay(*m_image, x, y);
@@ -264,14 +266,14 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
 
         /* If we didn't hit any objects, check if we hit a light source */
         if (!frontInfo.object) {
-            color += renderLightSourceShapes(ray) / Color4(m_samplesPerPixel);
+            color += renderLightSourceShapes(ray) / sampleOffset;
         }
 
         /* Calculate Lighting */
         if (frontInfo.object) {
             LightFilterRecord record = LightFilterRecord(false);
             u64 depth = 0;
-            color += calculateLightSources(record, ray, frontInfo, depth);
+            color += calculateLightSources(record, ray, frontInfo, depth) / sampleOffset;
         }
 
         /* Write to ImageLayer*/

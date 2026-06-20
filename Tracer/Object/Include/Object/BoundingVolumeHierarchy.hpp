@@ -9,6 +9,7 @@
 #include <map>
 #include <utility>
 #include <random>
+#include <stack>
 
 namespace Tracer {
     class Mesh;
@@ -22,47 +23,58 @@ struct MeshNode {
     std::vector<u64> indices;
 };
 
+class MeshContainerModel;
+
+/* @class Tracer::BVH::MeshContainerView
+   @brief BVH::MeshContainerView is a state machine for performing hit tests from 
+   a given BVH::MeshContainerModel and Ray. For speeding up the search by only requiring
+   the Mesh::isHit to only test prims that are closer than the last given MeshNode.  
+*/
+class MeshContainerView {
+public:
+    MeshContainerView(const MeshContainerModel* model, const Ray& ray);
+    const MeshNode* next(); /* Returns a MeshNode to test.*/
+    const bool finished(); /* Returns true if there is nothing else left to test.*/
+    void record(); /* If the current node did hit, record the distance */
+
+    u32 testedCount() const { return m_testedCount; }
+
+private:
+    const MeshContainerModel* m_model;
+    const Ray& m_ray;
+    f32 m_distanceThreshold = {std::numeric_limits<f32>::max()};
+
+    std::stack<const MeshNode*> m_stack;
+    f32 m_selectedDistance = {0.0f};
+
+    bool m_finished = {false};
+    u32 m_testedCount = {0};
+};
+
+/* @class Tracer::BVH::MeshContainerModel
+   @brief BVH::MeshContainerModel is the model for storing and building the tree of MeshNodes
+    with a target count of prims per node. The tree is built from top-down
+    using the given BVH::Algorithm as the strategy to use for spliting MeshNodes into smaller
+    pieces.
+*/
 enum class Algorithm {
     eInvalid = -1, 
     eObjectMedian = 0, /* Halves the Centeroid BBox On the Longest Axis. */
     eSurfaceAreaHeuristic = 1 /* Uses a Cost Function to Find the Best Cut on the Longest Axis.*/
 };
 
-/* @class TestableContainer
-   @brief Reduces the numbers of tests required 
-   to find the closest prim with an given 
-*/
-class TestableContainer {
+class MeshContainerModel {
 public:
-    TestableContainer(std::map<f32, const MeshNode*> foundNodes);
-    const MeshNode* next(); /* Returns an random MeshNode to test.*/
-    const bool finished(); /* Returns true if there is nothing else left to test.*/
-    void record(); /* If the current node did hit, record that distance */
+    friend class MeshContainerView;
 
-    u32 testedCount() const { return m_testedCount; }
-    u32 nodeCount() const { return m_nodeCount;}
-
-private:
-    void cutoff();
-    std::map<f32, const MeshNode*>  m_found; /* Key: Distance, Value: MeshNode&  */
-    f32 m_distanceThreshold;
-    std::mt19937 m_rng;
-
-    f32 m_currentDistance = {0.0f};
-    u32 m_testedCount = {0};
-    u32 m_nodeCount = {0};
-};
-
-/* MeshContainer handles the building and store of a given Mesh. */
-class MeshContainer {
-public:
-    MeshContainer() = default;
-    MeshContainer(Algorithm algorithm, Mesh* mesh) : m_algorithm(algorithm), m_pMesh(mesh) { };
-    ~MeshContainer() = default;
+    MeshContainerModel() = default;
+    MeshContainerModel(Algorithm algorithm, Mesh* mesh) : m_algorithm(algorithm), m_pMesh(mesh) { };
+    ~MeshContainerModel() = default;
 
     void SetTrianglesPerNode(u32 triangleCount);
     void BuildBVH();
-    TestableContainer FindAllHitNodes(const Ray& ray) const;
+    /* Return a MeshContainerView that can be used to search for Hit MeshNode* */
+    MeshContainerView createMeshContainerView(const Ray& ray) const;
     std::vector<MeshNode> AllNodes() const { return m_nodes; }
     void SetMesh(Mesh* mesh) { m_pMesh = mesh; }
 

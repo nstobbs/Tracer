@@ -123,6 +123,7 @@ Application::Application(ApplicationSettings settings) {
                                           static_cast<Surface*>(&redSurface),
                                           MergeOperation::Plus);
     redLight.setColor(redColor);
+    redLight.setIntensity(10.0f);
     redLight.setSurface(static_cast<Surface*>(&redWithWireframe));
     redLight.transform().setTranslate(Point3(2.5f, 4.0f, 0.0f));
     redLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
@@ -134,6 +135,7 @@ Application::Application(ApplicationSettings settings) {
                                             static_cast<Surface*>(&greenSurface),
                                             MergeOperation::Plus);
     greenLight.setColor(greenColor);
+    greenLight.setIntensity(10.0f);
     greenLight.setSurface(static_cast<Surface*>(&greenWithWireframe));
     greenLight.transform().setTranslate(Point3(0.0f, 4.0f, 0.0f));
     greenLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
@@ -145,8 +147,8 @@ Application::Application(ApplicationSettings settings) {
                                            static_cast<Surface*>(&blueSurface),
                                            MergeOperation::Plus);
     blueLight.setColor(blueColor);
+    blueLight.setIntensity(10.0f);
     blueLight.setSurface(static_cast<Surface*>(&blueWithWireframe));
-
     blueLight.transform().setTranslate(Point3(-2.5f, 4.0f, 0.0f));
     blueLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
 

@@ -16,17 +16,17 @@ namespace {
 namespace Tracer {
 
 Mesh::Mesh() {
-    m_container = BVH::MeshContainer(BVH::Algorithm::eSurfaceAreaHeuristic, this);
+    m_model = BVH::MeshContainerModel(BVH::Algorithm::eSurfaceAreaHeuristic, this);
 }
 
 bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
     auto localRay = m_transform.transformRay(ray);
     
     /* Find All of the Triangles to Render from the BVH */
-    auto testableContainer = m_container.FindAllHitNodes(localRay);
+    auto meshContainerView = m_model.createMeshContainerView(localRay);
 
-    while (!testableContainer.finished()) {
-        const auto& node = testableContainer.next();
+    while (!meshContainerView.finished()) {
+        const auto* node = meshContainerView.next();
 
         if(!node) {
             continue;
@@ -125,14 +125,13 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
 
             auto localInfo = m_transform.transformHitInfo(hitInfo, ray);
             hitInfo = localInfo;
-            testableContainer.record();
+            meshContainerView.record();
         }
     }
 
 #if 0 /* Report the TestableContainer Tested Count */
-    i32 testedCount = static_cast<i32>(testableContainer.testedCount());
-    i32 nodeCount = static_cast<i32>(testableContainer.nodeCount());
-    std::printf("TestableContainer: Out of %i nodes, %i was tested\n", nodeCount, testedCount);
+    i32 testedCount = static_cast<i32>(meshContainerView.testedCount());
+    std::printf("MeshContainerView: %i MeshNodes were tested\n", testedCount);
 #endif
     return hitInfo.hasHit;
 };
@@ -180,8 +179,8 @@ Mesh Mesh::TriangleMesh() {
     std::vector<u64> indices = {0, 1, 2};
     triangleMesh.m_indices = indices;
     
-    triangleMesh.m_container.SetTrianglesPerNode(1);
-    triangleMesh.m_container.BuildBVH(); /* One Triangle */
+    triangleMesh.m_model.SetTrianglesPerNode(1);
+    triangleMesh.m_model.BuildBVH(); /* One Triangle */
 
     return triangleMesh;
 };
@@ -232,8 +231,8 @@ Mesh Mesh::RetangleMesh() {
     std::vector<u64> indices = {0, 2, 1, 0, 3, 2};
     rectangleMesh.m_indices = indices;
 
-    rectangleMesh.m_container.SetTrianglesPerNode(7);
-    rectangleMesh.m_container.BuildBVH();
+    rectangleMesh.m_model.SetTrianglesPerNode(7);
+    rectangleMesh.m_model.BuildBVH();
 
     return rectangleMesh;
 };
@@ -327,8 +326,8 @@ std::vector<Mesh> Mesh::ReadFile(const std::string& filepath) {
             }
             // Calculate TrianglesPerNode Based of Index Count and Node Max Limit
             auto targetSize = meshObject.m_indices.size() / 128; //FIXME: Get the Node Limit from the MeshContainer...
-            meshObject.m_container.SetTrianglesPerNode(7);
-            meshObject.m_container.BuildBVH();
+            meshObject.m_model.SetTrianglesPerNode(7);
+            meshObject.m_model.BuildBVH();
             outputScene.push_back(meshObject);
         }
     }
