@@ -152,9 +152,16 @@ Application::Application(ApplicationSettings settings) {
     blueLight.transform().setTranslate(Point3(-2.5f, 4.0f, 0.0f));
     blueLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
 
-    m_scene->addLightSource(static_cast<LightSource*>(&redLight));
-    m_scene->addLightSource(static_cast<LightSource*>(&greenLight));
-    m_scene->addLightSource(static_cast<LightSource*>(&blueLight));
+    //m_scene->addLightSource(static_cast<LightSource*>(&redLight));
+    //m_scene->addLightSource(static_cast<LightSource*>(&greenLight));
+    //m_scene->addLightSource(static_cast<LightSource*>(&blueLight));
+
+    /* DomeLight */
+    auto texture = Image::ReadImage("./Textures/UV_Checker.png", "RGBA");
+    auto domeLight = DomeLight(&texture, "RGBA");
+    domeLight.setIntensity(2.0f);
+    m_scene->addLightSource(static_cast<LightSource*>(&domeLight));
+
 
 #else
 

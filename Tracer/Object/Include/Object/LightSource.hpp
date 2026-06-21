@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object/Mesh.hpp"
+#include "Surface/UVTexture.hpp"
 
 namespace Tracer {
 
@@ -38,7 +39,7 @@ class LightSource : public Object {
 public:
 
     virtual Ray fireRay() const = 0;
-    virtual Color3 applyRecord(const LightFilterRecord& record) const = 0;
+    virtual Color3 applyRecord(const LightFilterRecord& record, const HitInfo& info) const = 0;
     void setColor(const Color3 color) { m_color = color; }
     void setIntensity(const f32 value) { m_intensity = value; }
 
@@ -59,7 +60,7 @@ public:
     /* LightSource Virtual Functions */
     Ray fireRay() const override;
     /* Applies the LightEventRecord to the LightSource and returns the final pixel color. */
-    Color3 applyRecord(const LightFilterRecord& record) const override;
+    Color3 applyRecord(const LightFilterRecord& record, const HitInfo& info) const override;
 
     /* Object Virtual Functions */
     bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) override;
@@ -74,24 +75,23 @@ private:
 
 /* DomeLight - A sphere LightSource that emitter rays from outside in.
     Normally used as a SkyDome with HDRI Textures */
-//TODO: Move into LightSource.cpp
 class DomeLight : public LightSource {
 public:
-    DomeLight() {
-        m_mesh = Mesh::SphereMesh();
-    }
-
+    DomeLight(Image* texture, const std::string& layer);
     /* LightSource Virtual Functions */
     Ray fireRay() const override;
-    Color3 applyRecord(const LightFilterRecord& record) const override;
+    Color3 applyRecord(const LightFilterRecord& record, const HitInfo& info) const override;
 
     /* Object Virtual Functions */
-    bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) override {
-        return m_mesh.isHit(ray, hitInfo, interval);
-    }
+    bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) override;
+    Color4 calculateSurface(const HitInfo& info) const override;
+    BBox bbox() const override { return m_mesh.bbox(); }
+    Transform& transform() override { return m_mesh.transform(); }
 
 private:
     Mesh m_mesh;
+    Image* m_image = {nullptr};
+    UVTexture m_textureUV;
 };
 
 }

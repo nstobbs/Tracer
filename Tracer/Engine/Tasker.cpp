@@ -83,7 +83,7 @@ void Tasker::requestFrame() {
             this->execute();
         });
     }
-    m_cv.notify_one();
+    m_cv.notify_all();
 };
 
 void Tasker::requestFrame(TileOrder override) {

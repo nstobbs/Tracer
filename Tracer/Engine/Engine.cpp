@@ -115,6 +115,7 @@ void Engine::Tick() {
         }
 
         m_tasker->SetTileOrder(TileOrder::eCenterOut);
+        m_pool->clearQueue();
         m_tasker->requestFrame();
         updateLastVerion();
     }
@@ -196,7 +197,7 @@ Color4 Engine::calculateLightSources(LightFilterRecord& record, const Ray& ray, 
                 /* Check if we hit a LightSource */
                 for (auto const& light : m_scene->findHitLightSources(scatted)) {
                     if (light->isHit(scatted, scattedInfo, Interval())) {
-                        return Color4(light->applyRecord(record), 1.0f); /* Hit a LightSource */
+                        return Color4(light->applyRecord(record, scattedInfo), 1.0f); /* Hit a LightSource */
                     }
                 }
                 
