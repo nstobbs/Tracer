@@ -41,7 +41,7 @@ void Camera::Transform(f32 delta, CameraDirection direction) {
 };
 
 Vector3 Camera::ForwardVector() const {
-    return glm::normalize(Rotate(Vector3(0.0f, 0.0f, m_focalLength)));
+    return glm::normalize(Rotate(Vector3(0.0f, 0.0f, 1.0f)));
 };
 
 Vector3 Camera::RightVector(Vector3 direction) const {
@@ -83,7 +83,7 @@ Ray Camera::GetRay(const Image& image, u32 x, u32 y) {
     Vector3 right = RightVector(forward);
     Vector3 up = glm::normalize(glm::cross(forward, right));
 
-    Vector3 direction = glm::normalize(forward
+    Vector3 direction = glm::normalize(forward * m_focalLength
                         + right * (ndcX * aspectRatio)
                         + up * ndcY);
     return Ray(m_position, direction);

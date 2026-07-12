@@ -8,9 +8,11 @@
 
 #include "Object/LightSource.hpp"
 #include "Object/Mesh.hpp"
+#include "Object/Instancer.hpp"
 
 #include <imgui.h>
 
+#include <array>
 #include <iostream>
 #include <cstdlib>
 
@@ -95,22 +97,48 @@ Application::Application(ApplicationSettings settings) {
 
     m_scene = std::make_unique<Scene>();
     m_camera = std::make_unique<Camera>();
-
-#if 1
-    auto material = DiffuseMaterial(Color4(0.5f, 0.5f, 0.5f, 1.0f));
+    
+    /* Scene */
+    auto diffuse = DiffuseMaterial(Color4(0.5f, 0.5f, 0.5f, 1.0f));
+    auto glass = GlassMaterial(Color4(1.0f, 1.0f, 1.0f, 1.0f), 1.5f);
+    auto metal = MetalMaterial(0.0f);
+    
     auto meshes = Mesh::ReadFile(settings.inputFile());
-    for (auto& mesh : meshes) {
-        mesh.setMaterial(static_cast<Material*>(&material));
-        m_scene->addObject(static_cast<Object*>(&mesh));
+    //for (auto& mesh : meshes) {
+    //    mesh.setMaterial(static_cast<Material*>(&diffuse));
+    //    m_scene->addObject(static_cast<Object*>(&mesh));
+    //}
+
+    /* Create Instancer */
+    auto instancer = Instancer(m_scene.get(), &meshes.at(0));
+    const auto kObjectCount = 100;
+    instancer.setObjectCount(kObjectCount);
+    instancer.checkAndReBuild(); /* Builds the InstancerObjects */
+
+    /* Add Materials to the Instancer */
+    instancer.addMaterial("diffuse", static_cast<Material*>(&diffuse));
+    instancer.addMaterial("glass", static_cast<Material*>(&glass));
+    instancer.addMaterial("metal", static_cast<Material*>(&metal));
+
+    /* Configure each InstanceObject */
+    const u32 itemsPerRow = 10;
+    std::array<std::string, 3> materialNames = {"diffuse", "glass", "metal"};
+    for (i32 i = 0; i < kObjectCount; i++) {
+        auto row = i / itemsPerRow;
+        auto x = static_cast<f32>(2.5f * (i % itemsPerRow));
+        auto z = static_cast<f32>((((i % itemsPerRow) * 2.5f) + (row * 2.5f)));
+        auto position = Vector3(x, 0.0f, z);
+        instancer.transform(i).setTranslate(position);
+        instancer.setInstanceObjectMaterial(materialNames.at(i % 3), i);
     }
 
     /* Floor */
-    auto floor = Mesh::RetangleMesh();
-    floor.transform().setScale(Vector3(100.0f, 100.0f, 100.0f));
-    floor.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
-    floor.transform().setTranslate(Point3(0.0f, 0.0f, 0.0f));
-    floor.setMaterial(static_cast<Material*>(&material));
-    m_scene->addObject(static_cast<Object*>(&floor));
+    //auto floor = Mesh::RetangleMesh();
+    //floor.transform().setScale(Vector3(100.0f, 100.0f, 100.0f));
+    //floor.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
+    //floor.transform().setTranslate(Point3(0.0f, 200.0f, 0.0f));
+    //floor.setMaterial(static_cast<Material*>(&material));
+    //m_scene->addObject(static_cast<Object*>(&floor));
 
     /* Lighting Scene Setup */
     auto wireframe = Wireframe(Color4(1.0f)); 
@@ -152,27 +180,17 @@ Application::Application(ApplicationSettings settings) {
     blueLight.transform().setTranslate(Point3(-2.5f, 4.0f, 0.0f));
     blueLight.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
 
-    //m_scene->addLightSource(static_cast<LightSource*>(&redLight));
-    //m_scene->addLightSource(static_cast<LightSource*>(&greenLight));
-    //m_scene->addLightSource(static_cast<LightSource*>(&blueLight));
+    m_scene->addLightSource(static_cast<LightSource*>(&redLight));
+    m_scene->addLightSource(static_cast<LightSource*>(&greenLight));
+    m_scene->addLightSource(static_cast<LightSource*>(&blueLight));
 
     /* DomeLight */
-    auto texture = Image::ReadImage("./Textures/UV_Checker.png", "RGBA");
+    auto texture = Image::ReadImage("./Textures/UV_Checker3.png", "RGBA");
     auto domeLight = DomeLight(&texture, "RGBA");
-    domeLight.setIntensity(2.0f);
-    m_scene->addLightSource(static_cast<LightSource*>(&domeLight));
+    domeLight.setIntensity(1.0f);
+    //m_scene->addLightSource(static_cast<LightSource*>(&domeLight));
 
-
-#else
-
-    //auto surface = SolidColor(Color4(1.0f, 1.0f, 1.0f, 1.0f));
-auto surface = VertexColor();
-    auto mesh = Mesh::TriangleMesh();
-    mesh.SetSurface(&surface);
-    m_scene->AddObject(static_cast<Object*>(&mesh));
-
-#endif
-
+    /* Connect to Engine */
     m_engine->SetScene(m_scene.get());
     m_engine->SetCamera(m_camera.get());
     

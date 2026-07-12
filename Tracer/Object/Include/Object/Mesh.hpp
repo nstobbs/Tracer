@@ -25,6 +25,8 @@ public:
     const std::vector<u64>& GetIndices() const { return m_indices; }
     BVH::MeshContainerModel* MeshContainerModel() { return &m_model; }
 
+    static std::string ClassString() { return "Mesh"; }
+
 private:
     VertexInfo m_info;
     std::vector<Vertex> m_vertices;

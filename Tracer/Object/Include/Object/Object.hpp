@@ -13,7 +13,7 @@ class Surface;
 //TODO: remove surface 
 class Object {
 public:
-    bool virtual isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) = 0;
+    virtual bool isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) = 0;
 
     void setMaterial(Material* material) { m_material = material; }  
     Material* material() const { return m_material; }
@@ -34,6 +34,9 @@ public:
 
     virtual BBox bbox() const { return m_bbox; };
     virtual Transform& transform() { return m_transform; }
+
+    /* Returns an String of the Class name, to be used for type checking of different objects types. */
+    static std::string ClassString() { return "Object"; }
 
 protected:
     Material* m_material = {nullptr};

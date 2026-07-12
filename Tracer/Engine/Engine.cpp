@@ -104,6 +104,10 @@ void Engine::Tick() {
     if (m_isRunning && hasVersionChanged()) {
         StatusMessage::Set("Tracer::Engine: Requesting Frame");
         
+        //TODO: I really hate having to manage rebuilding
+        // the transforms before rendering. Really should be 
+        // more automated as it isn't the Engine job to check.
+        // Maybe it should be handled inside of the Tracer::Scene. 
         /* Re-Cache Objects Transform Matrixes */
         for (const auto& object : m_scene->objects()) {
             object->transform().build();

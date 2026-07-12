@@ -46,7 +46,7 @@ Color4 AreaLight::calculateSurface(const HitInfo& info) const {
 /* DemoLight */
 DomeLight::DomeLight(Image* texture, const std::string& layer) : m_textureUV(texture, layer) {
     m_mesh = Mesh::SphereMesh();
-    m_mesh.transform().setScale(Vector3(100.0f, 100.0f, 100.0f));
+    m_mesh.transform().setScale(Vector3(10000.0f, 10000.0f, 10000.0f));
     m_image = texture;
     m_color = Color3(1.0f, 1.0f, 1.0f); /* Color isn't used for DomeLights */
     m_intensity = 1.0f;

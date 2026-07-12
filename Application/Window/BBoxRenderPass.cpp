@@ -136,18 +136,20 @@ void BBoxRenderPass::setScene(Scene* scene) {
     m_scene = scene;
     m_bboxMatrices.clear();
     for (auto object : m_scene->objects()) {
-        auto nodes = static_cast<Mesh*>(object)->MeshContainerModel()->AllNodes();
-        for (auto node : nodes) {
-            if (node.indices.empty() && isSkipEmptyNodesEnabled()) {
-                continue;
+        if (object && object->ClassString() == Mesh::ClassString()) {
+            auto nodes = static_cast<Mesh*>(object)->MeshContainerModel()->AllNodes();
+            for (auto node : nodes) {
+                if (node.indices.empty() && isSkipEmptyNodesEnabled()) {
+                    continue;
+                }
+                
+                auto bbox = node.bbox;
+                Vector3 center = (bbox.Min() + bbox.Max()) * 0.5f;
+                Vector3 size = bbox.Max() - bbox.Min();
+                Matrix4 model = glm::translate(Matrix4(1.0f), center)
+                                * glm::scale(Matrix4(1.0f), size);
+                m_bboxMatrices.push_back(model);
             }
-            
-            auto bbox = node.bbox;
-            Vector3 center = (bbox.Min() + bbox.Max()) * 0.5f;
-            Vector3 size = bbox.Max() - bbox.Min();
-            Matrix4 model = glm::translate(Matrix4(1.0f), center)
-                            * glm::scale(Matrix4(1.0f), size);
-            m_bboxMatrices.push_back(model);
         }
     }
 

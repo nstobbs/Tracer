@@ -8,7 +8,7 @@
 #include <iostream>
 #include <map>
 
-#define DEBUG_PRINT 1
+#define DEBUG_PRINT 0
 
 namespace {
     const Tracer::u32 kBucketCount = 16;

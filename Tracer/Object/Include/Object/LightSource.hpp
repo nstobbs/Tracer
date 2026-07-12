@@ -48,6 +48,8 @@ public:
     Color3 color() const { return m_color; }
     f32 intensity() const { return m_intensity; }
 
+    static std::string ClassString() { return "LightSource"; }
+
 protected:
     Color3 m_color;
     f32 m_intensity;
@@ -69,6 +71,8 @@ public:
     BBox bbox() const override { return m_mesh.bbox(); }
     Transform& transform() override { return m_mesh.transform(); }
 
+    static std::string ClassString() { return "AreaLight"; }
+
 private:
     Mesh m_mesh;
 };
@@ -88,6 +92,7 @@ public:
     BBox bbox() const override { return m_mesh.bbox(); }
     Transform& transform() override { return m_mesh.transform(); }
 
+    static std::string ClassString() { return "DomeLight"; }
 private:
     Mesh m_mesh;
     Image* m_image = {nullptr};

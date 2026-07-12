@@ -4,6 +4,7 @@ add_library(Object STATIC
     Mesh.cpp
     Transform.cpp
     LightSource.cpp
+    Instancer.cpp
 )
 
 target_include_directories(Object PUBLIC 

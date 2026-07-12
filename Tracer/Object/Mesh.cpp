@@ -238,7 +238,7 @@ Mesh Mesh::RetangleMesh() {
 };
 
 Mesh Mesh::SphereMesh() {
-    Mesh sphere = ReadFile("./Models/Sphere.obj").back();
+    Mesh sphere = ReadFile("./Models/Sphere2.obj").back();
     return sphere;
 };
 

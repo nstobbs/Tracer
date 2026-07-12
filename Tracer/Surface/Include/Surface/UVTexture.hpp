@@ -23,12 +23,12 @@ public:
             u = (info.extra.triangle.v0.textureUV.x * static_cast<f32>(info.extra.triangle.u));
             u += (info.extra.triangle.v1.textureUV.x * static_cast<f32>(info.extra.triangle.v));
             u += (info.extra.triangle.v2.textureUV.x * static_cast<f32>(info.extra.triangle.w));
-            u = u / 3.0f;
+            //u = 1.0f - u;
 
             v = (info.extra.triangle.v0.textureUV.y * static_cast<f32>(info.extra.triangle.u));
             v += (info.extra.triangle.v1.textureUV.y * static_cast<f32>(info.extra.triangle.v));
             v += (info.extra.triangle.v2.textureUV.y * static_cast<f32>(info.extra.triangle.w));
-            v = v / 3.0f;
+            v = 1.0f - v;
         }
 
         u32 requestX = u * m_image->GetWidth();

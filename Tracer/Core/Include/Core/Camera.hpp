@@ -45,7 +45,7 @@ private:
     f32 m_tilt = {0.0f};
 
     Vector3 m_Up = {0.0f, 1.0f, 0.0f};
-    f32 m_focalLength = {0.5f};
+    f32 m_focalLength = {2.0f};
 
     u64 m_version = {0};
     

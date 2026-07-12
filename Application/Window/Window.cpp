@@ -269,6 +269,19 @@ void Window::renderWindow() {
     }
 
     ImGui::End();
+
+    /* Camera Editor */
+    ImGui::Begin("Camera Editor Panel");
+    if (m_tracerCamera) {
+        auto oldCameraPosition = m_tracerCamera->Position();
+        ImGui::InputFloat3("Position", &oldCameraPosition.x);
+
+        auto oldCameraDirection = m_tracerCamera->ForwardVector();
+        ImGui::InputFloat3("Direction", &oldCameraDirection.x);
+
+    }
+    ImGui::End();
+
     
     /* Demo Panel */
     bool openDemoPanel = true;
