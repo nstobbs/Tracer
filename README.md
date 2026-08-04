@@ -2,7 +2,7 @@
 
 #### What is Tracer?
 
-Tracer is a C++ Ray Tracer.
+Tracer is a C++ Ray Tracer Engine with an GUI Application for previewing renders and controlling the engine.
 
 ### Main Features:
 
@@ -12,7 +12,7 @@ Tracer is a C++ Ray Tracer.
 * Surface Shaders - Solid Color, Textures, Wireframe, Surface Normals, Geometric Normals and Merge Surfaces.
 * Materials - Diffuse, Glass and Metal
 * Lights - Area Light and Dome Light
-* Thread Pool
+* Rendering Thread Pool
 * EXR Writing Images
 * HUDs - Tiles Crosshair and Bounding Box Overlay.
 
@@ -22,7 +22,7 @@ Tracer is a C++ Ray Tracer.
 
 ### Dependencies:
 
-* [Tinyexr](https://github.com/syoyo/tinyexr)
+* [Tiny EXR](https://github.com/syoyo/tinyexr)
 * [stb](https://github.com/nothings/stb)
 * [GLEW](https://github.com/nigels-com/glew)
 * [GLM](https://github.com/g-truc/glm)
