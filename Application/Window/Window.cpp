@@ -2,7 +2,6 @@
 
 #include "Core/StatusMessage.hpp"
 
-#include <imgui.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_stdlib.h>
@@ -64,7 +63,9 @@ Window::Window(i32 width, i32 height) : m_width(width), m_height(height) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    ImGui::StyleColorsDark();
+    /* Set ImGui Style */
+    ImGui_StyleNuklearDarkGray();
+    //ImGui::StyleColorsDark();
     //auto& style = ImGui::GetStyle();
     //style.ScaleAllSizes(windowScaling);
     //style.FontScaleDpi = windowScaling;
@@ -273,12 +274,39 @@ void Window::renderWindow() {
     /* Camera Editor */
     ImGui::Begin("Camera Editor Panel");
     if (m_tracerCamera) {
-        auto oldCameraPosition = m_tracerCamera->Position();
-        ImGui::InputFloat3("Position", &oldCameraPosition.x);
 
-        auto oldCameraDirection = m_tracerCamera->ForwardVector();
-        ImGui::InputFloat3("Direction", &oldCameraDirection.x);
+        auto cameraPosition = m_tracerCamera->Position();
+        auto oldCameraPosition = cameraPosition;
+        ImGui::InputFloat3("Position", &cameraPosition.x);
+        if (cameraPosition.x != oldCameraPosition.x || 
+            cameraPosition.y != oldCameraPosition.y ||
+            cameraPosition.z != oldCameraPosition.z) {
+            m_tracerCamera->SetPosition(cameraPosition);
+        }
 
+        /* Note: Direction can't be directly set without knowning the pan and tilt of the
+        camera. Implement ForwardVector -> Pan Tilt to be able to set this value.*/
+        auto cameraDirection = m_tracerCamera->ForwardVector();
+        ImGui::InputFloat3("Direction", &cameraDirection.x);
+
+        std::array<f32, 2> panTilt{m_tracerCamera->GetPan(), m_tracerCamera->GetTilt()};
+        std::array<f32, 2> OldPanTilt = panTilt;
+        ImGui::InputFloat2("Pan/Tilt", &panTilt.front());
+        /* Pan */
+        if (OldPanTilt.front() != panTilt.front()) {
+            m_tracerCamera->SetPan(panTilt.front());
+        }
+        /* Tilt */
+        if (OldPanTilt.back() != panTilt.back()) {
+            m_tracerCamera->SetTilt(panTilt.back());
+        }
+
+        auto cameraFocalLength = m_tracerCamera->GetFocalLength();
+        auto oldCameraFocalLength = cameraFocalLength;
+        ImGui::InputFloat("Focal Length", &cameraFocalLength);
+        if (oldCameraFocalLength != cameraFocalLength) {
+            m_tracerCamera->SetFocalLength(cameraFocalLength);
+        }
     }
     ImGui::End();
 
@@ -310,4 +338,85 @@ Window::~Window() {
 
     SDL_GL_DeleteContext(m_glContext);
     SDL_DestroyWindow(m_window);
+}
+
+/* Imgui::Style From https://github.com/ocornut/imgui/issues/707 */
+inline void Window::ImGui_StyleNuklearDarkGray(ImGuiStyle* dst) {
+	ImGuiStyle* style = dst ? dst : &ImGui::GetStyle();
+	ImVec4* colors = style->Colors;
+
+	style->WindowBorderSize = 1.0f;
+	style->ChildBorderSize = 1.0f;
+	style->PopupBorderSize = 1.0f;
+	style->FrameBorderSize = 1.0f;
+
+	style->WindowRounding = 2.0f;
+	style->ChildRounding = 2.0f;
+	style->FrameRounding = 2.0f;
+	style->PopupRounding = 2.0f;
+	style->GrabRounding = 2.0f;
+
+	colors[ImGuiCol_Text]                   = ImVec4(0.69f, 0.69f, 0.69f, 1.00f);
+	colors[ImGuiCol_TextDisabled]           = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+	colors[ImGuiCol_WindowBg]               = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	colors[ImGuiCol_ChildBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_PopupBg]                = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	colors[ImGuiCol_Border]                 = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_FrameBg]                = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
+	colors[ImGuiCol_FrameBgActive]          = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
+	colors[ImGuiCol_TitleBg]                = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_TitleBgActive]          = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_MenuBarBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+	colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+	colors[ImGuiCol_CheckMark]              = ImVec4(0.69f, 0.69f, 0.69f, 1.00f);
+	//colors[ImGuiCol_CheckboxSelectedBg]     = ImVec4(0.15f, 0.15f, 0.15f, 0.50f);
+	colors[ImGuiCol_SliderGrab]             = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);
+	colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.59f, 0.59f, 0.59f, 1.00f);
+	colors[ImGuiCol_Button]                 = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	colors[ImGuiCol_ButtonHovered]          = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_ButtonActive]           = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
+	colors[ImGuiCol_Header]                 = ImVec4(0.18f, 0.18f, 0.18f, 0.00f);
+	colors[ImGuiCol_HeaderHovered]          = ImVec4(0.22f, 0.22f, 0.22f, 0.78f);
+	colors[ImGuiCol_HeaderActive]           = ImVec4(0.29f, 0.29f, 0.29f, 0.78f);
+	colors[ImGuiCol_Separator]              = ImVec4(0.29f, 0.29f, 0.29f, 0.50f);
+	colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.49f, 0.49f, 0.49f, 0.78f);
+	colors[ImGuiCol_SeparatorActive]        = ImVec4(0.69f, 0.69f, 0.69f, 1.00f);
+	colors[ImGuiCol_ResizeGrip]             = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
+	colors[ImGuiCol_ResizeGripHovered]      = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
+	colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.69f, 0.69f, 0.69f, 1.00f);
+	//colors[ImGuiCol_InputTextCursor]        = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
+	colors[ImGuiCol_TabHovered]             = ImVec4(0.49f, 0.49f, 0.49f, 0.80f);
+	colors[ImGuiCol_Tab]                    = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
+	colors[ImGuiCol_TabSelected]            = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
+	colors[ImGuiCol_TabSelectedOverline]    = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_TabDimmed]              = ImVec4(0.29f, 0.29f, 0.29f, 0.78f);
+	colors[ImGuiCol_TabDimmedSelected]      = ImVec4(0.39f, 0.39f, 0.39f, 0.78f);
+	colors[ImGuiCol_TabDimmedSelectedOverline]  = ImVec4(0.50f, 0.50f, 0.50f, 0.00f);
+	//colors[ImGuiCol_DockingPreview]         = ImVec4(0.69f, 0.69f, 0.69f, 0.78f);
+	//colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	colors[ImGuiCol_PlotLines]              = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+	colors[ImGuiCol_PlotLinesHovered]       = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+	colors[ImGuiCol_PlotHistogram]          = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+	colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+	colors[ImGuiCol_TableHeaderBg]          = ImVec4(0.19f, 0.19f, 0.20f, 1.00f);
+	colors[ImGuiCol_TableBorderStrong]      = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
+	colors[ImGuiCol_TableBorderLight]       = ImVec4(0.29f, 0.29f, 0.29f, 0.50f);
+	colors[ImGuiCol_TableRowBg]             = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_TableRowBgAlt]          = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
+	colors[ImGuiCol_TextLink]               = ImVec4(0.29f, 0.50f, 1.00f, 1.00f);
+	colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+	//colors[ImGuiCol_TreeLines]              = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+	colors[ImGuiCol_DragDropTarget]         = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+	//colors[ImGuiCol_DragDropTargetBg]       = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	//colors[ImGuiCol_UnsavedMarker]          = ImVec4(0.69f, 0.69f, 0.69f, 1.00f);
+	colors[ImGuiCol_NavCursor]              = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
+	colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+	colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 }

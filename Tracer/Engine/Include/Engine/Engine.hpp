@@ -53,6 +53,7 @@ public:
     void Tick();
 
 private:
+    void ClearTile(u32 x, u32 y); 
     void RenderTile(u32 x, u32 y);
 
     bool hasVersionChanged(); /* Returns true if the engine or camera version has changed */
@@ -80,6 +81,8 @@ private:
     u64 m_lastCameraVersion = {0};
 
     std::string m_targetLayer = "eInvalid";
+
+    Interval m_limits;;
 
     /* Execution Objects */
     friend class Tasker;

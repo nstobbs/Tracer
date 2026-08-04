@@ -19,10 +19,11 @@ Layer::Layer(i32 width, i32 height) {
     FloodColor(Color4(0.0f, 0.0f, 0.0f, 1.0f));
 };
 
-Color4& Layer::at(u32 x, u32 y) { 
-    if (y < m_data.size() && y < m_data[y].size()) {
-        return m_data[y][x];
+Color4* Layer::at(u32 x, u32 y) { 
+    if (y < m_data.size() && x < m_data[y].size()) {
+        return &m_data[y][x];
     }
+    return nullptr;
 };
 
 void Layer::FloodColor(Color4 color) {

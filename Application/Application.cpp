@@ -97,24 +97,30 @@ Application::Application(ApplicationSettings settings) {
 
     m_scene = std::make_unique<Scene>();
     m_camera = std::make_unique<Camera>();
-    
-    /* Scene */
+
+    /* Build Scene */
+#define USE_SCENE_INDEX 1 /* 0 = Solo Object, 1 = Instancer x3, 2 = Instancer x50*/
+#define USE_LIGHTING_INDEX 1 /* 0 = RGB Lights, 1 = DomeLight  */
+#define ENABLE_FLOOR false
+
+    /* Import Mesh, Create Materials */
+    auto meshes = Mesh::ReadFile(settings.inputFile());
     auto diffuse = DiffuseMaterial(Color4(0.5f, 0.5f, 0.5f, 1.0f));
     auto glass = GlassMaterial(Color4(1.0f, 1.0f, 1.0f, 1.0f), 1.5f);
-    auto metal = MetalMaterial(0.0f);
-    
-    auto meshes = Mesh::ReadFile(settings.inputFile());
-    //for (auto& mesh : meshes) {
-    //    mesh.setMaterial(static_cast<Material*>(&diffuse));
-    //    m_scene->addObject(static_cast<Object*>(&mesh));
-    //}
+    auto metal = MetalMaterial(0.1f);
 
+#if USE_SCENE_INDEX == 0
+    for (auto& mesh : meshes) {
+        mesh.setMaterial(static_cast<Material*>(&diffuse));
+        m_scene->addObject(static_cast<Object*>(&mesh));
+    }
+
+#elif USE_SCENE_INDEX == 1
     /* Create Instancer */
     auto instancer = Instancer(m_scene.get(), &meshes.at(0));
-    const auto kObjectCount = 100;
+    const auto kObjectCount = 3;
     instancer.setObjectCount(kObjectCount);
-    instancer.checkAndReBuild(); /* Builds the InstancerObjects */
-
+    instancer.checkAndReBuild(); // Builds the InstancerObjects 
     /* Add Materials to the Instancer */
     instancer.addMaterial("diffuse", static_cast<Material*>(&diffuse));
     instancer.addMaterial("glass", static_cast<Material*>(&glass));
@@ -122,25 +128,60 @@ Application::Application(ApplicationSettings settings) {
 
     /* Configure each InstanceObject */
     const u32 itemsPerRow = 10;
+    const f32 spacing = 2.5f;
+    const f32 scaling = 1.0f;
     std::array<std::string, 3> materialNames = {"diffuse", "glass", "metal"};
     for (i32 i = 0; i < kObjectCount; i++) {
         auto row = i / itemsPerRow;
-        auto x = static_cast<f32>(2.5f * (i % itemsPerRow));
-        auto z = static_cast<f32>((((i % itemsPerRow) * 2.5f) + (row * 2.5f)));
+        auto x = static_cast<f32>(spacing * (i % itemsPerRow));
+        auto z = static_cast<f32>((((i % itemsPerRow) * spacing) + (row * spacing)));
         auto position = Vector3(x, 0.0f, z);
+        auto scale = Vector3(scaling);
         instancer.transform(i).setTranslate(position);
+        instancer.transform(i).setScale(scale);
         instancer.setInstanceObjectMaterial(materialNames.at(i % 3), i);
     }
 
+#elif USE_SCENE_INDEX == 2
+    /* Create Instancer */
+    auto instancer = Instancer(m_scene.get(), &meshes.at(0));
+    const auto kObjectCount = 100;
+    instancer.setObjectCount(kObjectCount);
+    instancer.checkAndReBuild(); // Builds the InstancerObjects 
+    /* Add Materials to the Instancer */
+    instancer.addMaterial("diffuse", static_cast<Material*>(&diffuse));
+    instancer.addMaterial("glass", static_cast<Material*>(&glass));
+    instancer.addMaterial("metal", static_cast<Material*>(&metal));
+
+    /* Configure each InstanceObject */
+    const u32 itemsPerRow = 10;
+    const f32 spacing = 2.5f;
+    const f32 scaling = 1.0f;
+    std::array<std::string, 3> materialNames = {"diffuse", "glass", "metal"};
+    for (i32 i = 0; i < kObjectCount; i++) {
+        auto row = i / itemsPerRow;
+        auto x = static_cast<f32>(spacing * (i % itemsPerRow));
+        auto z = static_cast<f32>((((i % itemsPerRow) * spacing) + (row * spacing)));
+        auto position = Vector3(x, 0.0f, z);
+        auto scale = Vector3(scaling);
+        instancer.transform(i).setTranslate(position);
+        instancer.transform(i).setScale(scale);
+        instancer.setInstanceObjectMaterial(materialNames.at(i % 3), i);
+#endif
+
+#if ENABLE_FLOOR
     /* Floor */
-    //auto floor = Mesh::RetangleMesh();
-    //floor.transform().setScale(Vector3(100.0f, 100.0f, 100.0f));
-    //floor.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
-    //floor.transform().setTranslate(Point3(0.0f, 200.0f, 0.0f));
-    //floor.setMaterial(static_cast<Material*>(&material));
-    //m_scene->addObject(static_cast<Object*>(&floor));
+    auto floor = Mesh::RetangleMesh();
+    floor.transform().setScale(Vector3(100.0f, 100.0f, 100.0f));
+    floor.transform().setRotation(Vector3(90.0f, 0.0f, 0.0f));
+    floor.transform().setTranslate(Point3(0.0f, 200.0f, 0.0f));
+    floor.setMaterial(static_cast<Material*>(&diffuse));
+    m_scene->addObject(static_cast<Object*>(&floor));
+
+#endif
 
     /* Lighting Scene Setup */
+#if USE_LIGHTING_INDEX == 0
     auto wireframe = Wireframe(Color4(1.0f)); 
     wireframe.setThickness(0.005f);
 
@@ -184,11 +225,14 @@ Application::Application(ApplicationSettings settings) {
     m_scene->addLightSource(static_cast<LightSource*>(&greenLight));
     m_scene->addLightSource(static_cast<LightSource*>(&blueLight));
 
+#elif USE_LIGHTING_INDEX == 1
     /* DomeLight */
-    auto texture = Image::ReadImage("./Textures/UV_Checker3.png", "RGBA");
+    auto texture = Image::ReadImage("./Textures/UV_Checker2.png", "RGBA");
     auto domeLight = DomeLight(&texture, "RGBA");
     domeLight.setIntensity(1.0f);
-    //m_scene->addLightSource(static_cast<LightSource*>(&domeLight));
+    m_scene->addLightSource(static_cast<LightSource*>(&domeLight));
+
+#endif
 
     /* Connect to Engine */
     m_engine->SetScene(m_scene.get());

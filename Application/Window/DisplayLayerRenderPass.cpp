@@ -90,7 +90,8 @@ void DisplayLayerRenderPass::render(RenderContext& context) {
         for (i32 y = 0; y < m_height; y++) {
             auto& row = context.layer->GetRow(y);
             for (i32 x = 0; x < m_width; x++) {
-                outImage.push_back(Color3(row.at(x).r, row.at(x).g, row.at(x).b));
+                auto& pixel = row.at(x);
+                outImage.push_back(Color3(pixel.r, pixel.g, pixel.b));
             }
         }
         memcpy(ptr, outImage.data(), imageBufferSize);

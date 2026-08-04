@@ -378,17 +378,22 @@ const MeshNode* MeshContainerView::next() {
             continue;
         }
 
-        auto isLeaf = (node->leftIndex == -1 && node->rightIndex == -1);
-        if (isLeaf && !node->indices.empty()) {
+        const auto leftHasNode = (node->leftIndex != -1);
+        const auto rightHasNode = (node->rightIndex != -1);
+        if (!leftHasNode && !rightHasNode) {
+            continue;
+        }
+
+        if (!node->indices.empty()) {
             m_testedCount++;
             m_selectedDistance = distance;
             return node; /* If the MeshNode contains an Hit, then caller calls record()*/
         }
 
-        if (node->rightIndex != -1) {
+        if (leftHasNode) {
             m_stack.push(&m_model->m_nodes.at(node->rightIndex));
         }
-        if (node->leftIndex!= -1) {
+        if (rightHasNode) {
             m_stack.push(&m_model->m_nodes.at(node->leftIndex));
         }
 

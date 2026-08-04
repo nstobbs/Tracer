@@ -66,6 +66,7 @@ std::queue<TileTask> Tasker::createTilesQueue() {
                 tile.x = topLeftX;
                 tile.y = topLeftY;
                 tile.task = [this, topLeftX, topLeftY]{
+                    this->m_engine->ClearTile(topLeftX, topLeftY);
                     this->m_engine->RenderTile(topLeftX, topLeftY);
                 };
                 tileQueue.emplace(tile);

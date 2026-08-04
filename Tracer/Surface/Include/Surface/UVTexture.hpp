@@ -33,7 +33,7 @@ public:
 
         u32 requestX = u * m_image->GetWidth();
         u32 requestY = v * m_image->GetHeight();
-        if (requestX > m_image->GetWidth() || requestY > m_image->GetHeight()) {
+        if (requestX >= m_image->GetWidth() || requestY >= m_image->GetHeight()) {
             return Color4(1.0f, 0.0f, 0.0f, 0.0f);
         }
 

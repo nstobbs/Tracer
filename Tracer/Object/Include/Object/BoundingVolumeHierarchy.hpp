@@ -33,6 +33,11 @@ class MeshContainerModel;
 class MeshContainerView {
 public:
     MeshContainerView(const MeshContainerModel* model, const Ray& ray);
+    ~MeshContainerView() = default;
+
+    MeshContainerView(const MeshContainerView&) = delete;
+    MeshContainerView& operator=(const MeshContainerView) = delete;
+
     const MeshNode* next(); /* Returns a MeshNode to test.*/
     const bool finished(); /* Returns true if there is nothing else left to test.*/
     void record(); /* If the current node did hit, record the distance */

@@ -22,12 +22,13 @@ enum class CameraDirection {
 
 class Ray;
 
+/* TODO: Implement Arcball Camera.*/
+
 class Camera {
 public:
     Camera();
     ~Camera() = default;
 
-    f32 GetFocalLength() const {return m_focalLength;}; 
     void Transform(f32 delta, CameraDirection direction);
     u64 GetVersion() const { return m_version; };
 
@@ -38,6 +39,15 @@ public:
     inline constexpr Point3 Position() const { return m_position; }
 
     Ray GetRay(const Image& image, u32 x, u32 y);
+
+    void SetPosition(Point3 position) { m_position = position; m_version++; }
+    void SetPan(f32 pan) { m_pan = pan; m_version++; }
+    void SetTilt(f32 tilt) { m_tilt = tilt; m_version++; }
+    void SetFocalLength(f32 focalLength) { m_focalLength = focalLength; m_version++; }
+
+    f32 GetPan() const { return m_pan; }
+    f32 GetTilt() const { return m_tilt; }
+    f32 GetFocalLength() const {return m_focalLength;}; 
 
 private:
     Point3 m_position = {0.0f, 0.0f, -2.0f};

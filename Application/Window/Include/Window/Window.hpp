@@ -12,6 +12,7 @@
 #include "Window/TileCrosshairRenderPass.hpp"
 #include "Window/BBoxRenderPass.hpp"
 
+#include <imgui.h>
 #include <array>
 
 using namespace Tracer;
@@ -36,6 +37,9 @@ public:
 
 private:
 	bool createGLResources();
+	
+	/* Imgui::Style From https://github.com/ocornut/imgui/issues/707 */
+	inline void ImGui_StyleNuklearDarkGray(ImGuiStyle* dst = nullptr);
 
 	/* SDL Resources */
 	SDL_Window* m_window;

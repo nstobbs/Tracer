@@ -28,15 +28,11 @@ bool Mesh::isHit(const Ray& ray, HitInfo& hitInfo, Interval interval) {
     while (!meshContainerView.finished()) {
         const auto* node = meshContainerView.next();
 
-        if(!node) {
+        if(!node || node->indices.empty()) {
             continue;
         }
 
-        if (node->indices.empty()) {
-            continue;
-        }
-
-        assert(node->indices.size() % 3 == 0);
+        assert(node->indices.size() % 3 == 0); /* Invalid Index Count */
         u64 triangleCount = node->indices.size() / 3;
         for (u64 i = 0; i < triangleCount; i++) {
             /* Get Triangle Vertices */

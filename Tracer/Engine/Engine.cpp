@@ -133,6 +133,40 @@ void Engine::Tick() {
     }
 }
 
+void Engine::ClearTile(u32 x, u32 y) {
+    /* Record Active Tile - For TileCrosshair HUD */
+    i32 tileID;
+    if (m_activeList) {
+        {
+            std::unique_lock<std::mutex> lock(m_activeList->mutex);
+            tileID = m_activeList->lifetimeTileCount++;
+            m_activeList->active.emplace(tileID, std::pair<i32, i32>(x, y));
+        }
+    }
+
+    for (u32 bY = 0; bY < m_tileSize; bY++) {
+        for (u32 bX = 0; bX < m_tileSize; bX++) {
+            /* Clear Screen */
+            if (m_targetLayer != "eInvalid") {
+                auto* layer = m_image->GetLayer(m_targetLayer);
+                if (layer) {
+                    if (auto* pixel = layer->at(bX + x, bY + y)) {
+                        *pixel = m_missedColor;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Remove Tile From Record - For TileCrosshair HUD*/
+    if (m_activeList) {
+        {
+            std::unique_lock<std::mutex> lock(m_activeList->mutex);
+            m_activeList->active.erase(tileID);
+        }
+    }
+}
+
 void Engine::RenderTile(u32 x, u32 y) {
     i32 tileID;
     /* Record Active Tile - For TileCrosshair HUD */
@@ -146,6 +180,7 @@ void Engine::RenderTile(u32 x, u32 y) {
 
     /* Randomly Shuffle Calculate Pixel Tasks */
     std::vector<std::pair<u32, u32>> pixelCoords;
+    pixelCoords.reserve(m_tileSize*m_tileSize);
     for (u32 bY = 0; bY < m_tileSize; bY++) {
         for (u32 bX = 0; bX < m_tileSize; bX++) {
             pixelCoords.emplace_back(x + bX, y + bY);
@@ -155,7 +190,7 @@ void Engine::RenderTile(u32 x, u32 y) {
     std::shuffle(pixelCoords.begin(), pixelCoords.end(), rng);
     for (auto& [x, y] : pixelCoords) {
         if (m_pool->isAborting()) {
-            continue;;
+            continue;
         }
         CalculatePixelColor(x, y);
     }
@@ -173,7 +208,7 @@ Color4 Engine::renderLightSourceShapes(const Ray& ray) const {
     Color4 color{};
     for (const auto& lightSource : m_scene->findHitLightSources(ray)) {
         HitInfo info{};
-        if (lightSource->isHit(ray, info, Interval())) {
+        if (lightSource->isHit(ray, info, m_limits)) {
             color += lightSource->calculateSurface(info);
         }
     }
@@ -200,7 +235,7 @@ Color4 Engine::calculateLightSources(LightFilterRecord& record, const Ray& ray, 
             if (info.object->material()->scatter(ray, info, scatted)) {
                 /* Check if we hit a LightSource */
                 for (auto const& light : m_scene->findHitLightSources(scatted)) {
-                    if (light->isHit(scatted, scattedInfo, Interval())) {
+                    if (light->isHit(scatted, scattedInfo, m_limits)) {
                         return Color4(light->applyRecord(record, scattedInfo), 1.0f); /* Hit a LightSource */
                     }
                 }
@@ -208,10 +243,10 @@ Color4 Engine::calculateLightSources(LightFilterRecord& record, const Ray& ray, 
                 /* Check if we hit any Objects */
                 Object* frontObject = nullptr;
                 HitInfo frontInfo{};
-                frontInfo.distance = Interval().Max();
+                frontInfo.distance = m_limits.Max();
 
                 for (auto const& object : m_scene->findHitObjects(scatted)) {
-                    if (object->isHit(scatted, scattedInfo, Interval())) {
+                    if (object->isHit(scatted, scattedInfo, m_limits)) {
                         if (scattedInfo.distance < frontInfo.distance) {
                             frontObject = object;
                             frontInfo = scattedInfo;
@@ -234,12 +269,6 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         return;
     }
 
-    /* Clear Screen */
-    if (m_targetLayer != "eInvalid") {
-        auto& dest = m_image->GetLayer(m_targetLayer)->at(x, y);
-        dest = m_missedColor;
-    }
-
     auto sampleOffset = Color4(m_samplesPerPixel);
 
     /* Render Per Samples */
@@ -257,11 +286,11 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
         /* Depth Testing */
         Object* frontObject = nullptr;
         HitInfo frontInfo{};
-        frontInfo.distance = Interval().Max();
+        frontInfo.distance = m_limits.Max();
 
         /* Find Closest Object */
         for (const auto& object : m_scene->findHitObjects(ray)) {
-            if (object->isHit(ray, info, Interval())) {
+            if (object->isHit(ray, info, m_limits)) {
                 if (info.distance < frontInfo.distance) {
                     frontObject = object;
                     frontInfo = info;
@@ -283,8 +312,9 @@ void Engine::CalculatePixelColor(u32 x, u32 y) const {
 
         /* Write to ImageLayer*/
         if (m_targetLayer != "eInvalid") {
-            auto& dest = m_image->GetLayer(m_targetLayer)->at(x, y);
-            dest = dest + color;
+            if (auto* pixel = m_image->GetLayer(m_targetLayer)->at(x, y)) {
+                *pixel = *pixel + color;
+            }
         }
     }
 }
