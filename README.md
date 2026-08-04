@@ -34,15 +34,35 @@ Tracer is a C++ Ray Tracer Engine with an GUI Application for previewing renders
 
 ###### Building Debug on Windows:
 
-```
-git clone git@github.com:nstobbs/Tracer.git
-cd ./Tracer
-git submodule update --init --recursive
-conan install . --settings=build_type=Debug --build=missing
-cd ./build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=generators/conan_toolchain.cmake -G "Visual Studio 17 2022"
-cmake --build
-```
+Clone the Tracer Github Repository:
+`git clone git@github.com:nstobbs/Tracer.git`
+
+Switch to the Tracer Folder:
+`cd ./Tracer`
+
+Create a Virtual Python Enviorment:
+`python -m venv devenv`
+
+Active the Python Enviorment:
+`./devenv/Scripts/Activate.ps1`
+
+Install Conan and CMake via pip:
+`pip install -r ./requirements.txt`
+
+Pull Git Submodules:
+`git submodule update --init --recursive`
+
+Install Conan Dependenceis:
+`conan install . --build=missing`
+
+Switch to the Build Folder:
+`cd ./build`
+
+Confirgure CMake:
+`cmake .. -DCMAKE_TOOLCHAIN_FILE=generators/conan_toolchain.cmake -G "Visual Studio 17 2022"`
+
+Build:
+`cmake --build`
 
 ### TODO List:
 
